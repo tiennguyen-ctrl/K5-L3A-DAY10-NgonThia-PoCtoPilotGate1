@@ -30,10 +30,12 @@ Mỗi lệnh `lab10.eval` và `lab10.grade` tự ghi một dòng vào `runs/jour
 
 | # | Mã lần chạy | Bộ ticket · mốc | Đổi MỘT thứ gì so với lần trước | pass_rate (khoảng tin cậy 95%) | pass_k | Hoàn sai (đ) · lỗi hãng oan · lộ dữ liệu | Tỉ lệ chuyển người | Kết luận (một câu) |
 |---|---|---|---|---|---|---|---|---|
-| 1 | | Sx · prepared | nhận thẻ đã bốc, chưa sửa thêm (đúng cổng vòng 1 đã chốt) | | | | | |
+| 1 | `R-S6-prepared-20261118-171452-e22afc` | S6 · prepared | nhận thẻ đã bốc, chưa sửa thêm (đúng cổng vòng 1 đã chốt) | 0,6667 [0,4167; 0,9167] | 0,6667 | 270.000 đ · 20 · 0 | 0,0 | Cổng vòng 1 đỡ được một nửa (pass_rate 0,3333 lên 0,6667, lỗi hãng oan 40 xuống 20) nhưng hoàn sai 270.000 đ chưa giảm; 4 ngưỡng đã ký chưa đạt trên gói S6 |
 | 2 | | Sx · after | | | | | | |
 | 3 | | Sx · after | | | | | | |
 | 4 | | base · after | (kiểm không regression) | | | | | |
+
+*Ghi chú nhật ký:* lần `grade` đầu `R-S6-grade-20261118-171400-e22afc` báo `1 integrity ❌` vì 19 file khoá bị đổi xuống dòng sang CRLF khi clone trên Windows (`core.autocrlf=true`), nội dung không đổi. Đã đưa về LF đúng bản gốc, rồi chạy lại: `R-S6-grade-20261118-171451-e22afc` báo `1 integrity ✅`. Lần `171451` là lần hợp lệ dùng cho mốc prepared này.
 
 ---
 
@@ -47,19 +49,21 @@ Chạy **trước khi sửa bất cứ thứ gì**:
 python3 -m lab10.grade --incident Sx
 ```
 
-- Mã lần chạy grade: `__________` · base: `__________` · prepared: `__________`
-- Cổng vòng 1 đỡ được ô / con số nào (so cột base với cột prepared): …
-- Khối kinh doanh và vận hành còn dòng nào vượt trần: …
+- Mã lần chạy grade: `R-S6-grade-20261118-171451-e22afc` · base: `R-S6-before-20261118-171452-e22afc` · prepared: `R-S6-prepared-20261118-171452-e22afc`
+- Cổng vòng 1 đỡ được ô / con số nào (so cột base với cột prepared): `pass_rate` và `pass_k` cùng tăng từ 0,3333 lên 0,6667; lỗi hãng oan giảm từ 40 xuống 20; số lần chạy hỏng giảm từ 40 xuống 20 (ticket `S6-01` đến `S6-04` hết hỏng, kho HN về 1,0). Chưa đỡ được: hoàn sai vẫn 270.000 đ (không đổi), và còn hỏng `S6-20`, `S6-21`, `S6-42`, `S6-43` (4 ticket × 5 seed = 20 lần chạy) ở kho CT, DN, HCM và hãng DNB, GHSH. Bộ nền vẫn 1,0, không có ca mới hỏng.
+- Khối kinh doanh và vận hành còn dòng nào vượt trần: không dòng nào vượt trần (chi phí 3.162 đ/ticket so với làm tay 10.000 đ, ROI 0,74, 0 ca ùn, tổng hoàn tự động ngày 96.000 đ so với trần 500.000 đ). Nhưng 4 ngưỡng đã ký chưa đạt trên gói S6: `pass_rate` 0,6667 (< 0,90), `pass_k` 0,6667 (< 0,80), hoàn sai 270.000 đ (> 0), lỗi hãng oan 20 (> 0). Report ghi "không đủ căn cứ để chọn Tiếp tục".
 
 **Mở lại pre-mortem (Phiếu B mục B6), viết bằng bút khác màu.** Với thẻ S1, S3, S4, S5 đây là một phần của phần riêng theo thẻ.
 
-- Sự cố trên thẻ thuộc lăng kính nào (kỹ thuật, kinh doanh, con người và vận hành, pháp lý)? …
-- Có nằm trong các lý do bàn đã viết không? Nếu có: cổng vòng 1 đã đỡ được bao nhiêu (đọc cột prepared trong report)? Nếu không: vì sao cả bàn không nghĩ tới? …
+- Sự cố trên thẻ thuộc lăng kính nào (kỹ thuật, kinh doanh, con người và vận hành, pháp lý)? **Pháp lý** (bên thứ ba: hãng nhỏ và tài xế bị ghi lỗi oan, bị trừ thưởng chuyên cần) và **kỹ thuật** (hệ thống ghi lỗi theo đơn thay vì theo từng kiện). Đây là giả thuyết từ tin nhắn trên thẻ, chưa dò trace để xác nhận.
+- Có nằm trong các lý do bàn đã viết không? Nếu có: cổng vòng 1 đã đỡ được bao nhiêu (đọc cột prepared trong report)? Nếu không: vì sao cả bàn không nghĩ tới? Có một phần: B6 dòng Pháp lý đã viết "hãng đã bị gắn lỗi oan và nhận thông báo dù tracking chưa đạt điều kiện ghi lỗi", và cổng K3 trong `write_gate` (`file_carrier_fault`) đã đỡ được một nửa (lỗi hãng oan 40 xuống 20, 4/8 ticket hỏng hết hỏng). Phần chưa nghĩ tới: đơn tách kiện do nhiều hãng chở, khi kiện của hãng này đúng hẹn mà kiện của hãng khác trễ; bàn mới nghĩ tới "tracking chưa đủ điều kiện" chứ chưa nghĩ tới việc chọn nhầm hãng khi ticket không nói rõ kiện nào, và việc ghi dồn nhiều lỗi liền cho cùng một hãng trong ngày.
 - Lý do còn thiếu, thêm bây giờ:
 
 | Lý do thất bại (viết ở thì quá khứ) | Lăng kính | Kiểm được bằng gì (trace / data / config nào) |
 |---|---|---|
-| | | |
+| Đơn tách kiện nhiều hãng đã bị ghi lỗi cho hãng và tài xế có kiện giao đúng hẹn, vì hệ thống coi cả đơn là đơn vị chịu lỗi thay vì từng kiện. | Pháp lý / Kỹ thuật | Trace `S6-20`, `S6-21` (so `tracking.parcels` với dòng `file_carrier_fault`); `incidents/S6/world_patch.json` → `parcels[].carrier_id`, `driver_id` (giả thuyết, chưa dò trace) |
+| Khi khách không nói rõ kiện nào, hệ thống đã tự chọn một hãng để ghi lỗi thay vì chuyển người xem. | Kỹ thuật / Con người và vận hành | Trace các ticket không có `parcel_id` (nhóm `S6-40` đến `S6-43`) và `ctx.log` của `write_gate` (giả thuyết, chưa dò trace) |
+| Hãng nhỏ đã bị ghi dồn nhiều lỗi liền trong một ngày, kéo theo trừ thưởng chuyên cần của tài xế dù từ lỗi thứ 3 phải có người duyệt. | Con người và vận hành / Pháp lý | `ops_limits.max_auto_strikes_per_carrier_per_day` = 2 trong `data/world.json`; `fault_rows` theo hãng trong trace (giả thuyết, chưa dò trace) |
 
 ---
 
