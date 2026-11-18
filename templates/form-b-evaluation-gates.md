@@ -456,8 +456,8 @@ bao nhiêu thời gian? (3) Có phần nào của dự án không nên làm ti�
 | Nếu Cải tiến thêm: giả thuyết cụ thể + hạn | Không áp dụng (chọn Tiếp tục). |
 | Nếu Dừng: bài học ghi lại | Không áp dụng (chọn Tiếp tục). |
 | Một bằng chứng còn thiếu (thứ bộ nền chưa đo được) | Chưa đo gói sự cố S6 và bài kiểm tra ẩn (đơn, khách, cách viết, ngày khác); dữ liệu là mock (MockLLM, 22 ticket × 5 seed nên khoảng tin cậy hẹp vì mẫu nhỏ); chưa đo giờ cao điểm thật và việc người duyệt có tin trợ lý không. |
-| Ngày quyết định lại (trừ khi Dừng) | (nháp, chờ Hoàng xác nhận) 18/11/2026, quyết định lại ở v2 sau kết quả thẻ S6, khớp ngày xem lại tiêu chí ở Phiếu A. |
-| PIC ký | |
+| Ngày quyết định lại (trừ khi Dừng) | 18/11/2026 (quyết định lại ở v2 sau kết quả thẻ S6, khớp ngày xem lại tiêu chí ở Phiếu A). |
+| PIC ký | Nguyễn Trần Tiến |
 
 Xong v1 thì lưu và đẩy một bản (sau mốc này không sửa cột v1):
 
