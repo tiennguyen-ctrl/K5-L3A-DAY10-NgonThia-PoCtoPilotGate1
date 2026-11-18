@@ -75,7 +75,16 @@ nhau chia cho số lần chạy có sự kiện `proposal`; lần chạy không 
 
 Số minh hoạ trong đề (không phải số của bàn). Khoanh: **(a) · (b) · (c) · (d)**
 
-Giải thích một câu: …
+**Chọn: (b)**
+
+Giải thích một câu: X chỉ hỏng 1/50 lần chạy và khoảng tin cậy 95% của X là [0,94; 1,0] đã chứa luôn 1,0 của Y, nên chênh một lần chạy chưa đủ căn cứ nói Y tốt hơn X.
+
+Vì sao không chọn đáp án khác:
+- (a) sai vì 1,0 nằm trong khoảng tin cậy của X. Muốn nói "tốt hơn có ý nghĩa" thì khoảng tin cậy của hiệu Y − X phải nằm hẳn trên 0.
+- (c) sai vì "không phân biệt được" khác với "chắc chắn như nhau". Y 50/50 vẫn có thể còn lỗi hiếm chưa lộ: một lỗi xảy ra 2% mỗi lần chạy vẫn có (0,98)^50 ≈ 36% khả năng không xuất hiện lần nào trong 50 lần.
+- (d) sai vì X không "trượt" ngưỡng nào trong đề, và với MockLLM tất định, thêm seed chỉ cho thêm mẫu chứ không làm X "đạt" hơn.
+
+Đối chiếu Lab 9 của bàn (`lab9-ref/eval_card.md`): baseline `swarm` có `pass_rate` 0,9857, đúng 1 trial hỏng (`E-002@55`, FM-03: tin số ngày trong ticket), còn bản `fixed` đạt 1,0. Khoảng tin cậy ghép cặp của hiệu là Δ +0,014, CI [+0,000; +0,043], chạm 0. Đây chính là tình huống (b): Y sửa được đúng lỗi đó, nhưng một mình con số pass_rate chưa chứng minh được. Bằng chứng mạnh hơn là trace chỉ ra lỗi đã hết ở đúng ticket@seed đó.
 
 ---
 
