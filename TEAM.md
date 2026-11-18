@@ -46,19 +46,26 @@ Một điều học được, một điều còn chưa chắc.
 
 ### Phần việc phụ trách
 
-Vận hành và pháp lý. HAZOP, checklist 9 nhóm, runbook, `config/operating_gates.json` mục `operations` và `legal`, `submission/submission.json`. Chi tiết xem [`chia-viec.md`](chia-viec.md).
+Em phụ trách vận hành và pháp lý: phân tích rủi ro, checklist 9 nhóm, runbook, hai mục `operations` và `legal` trong config, và phần cập nhật hồ sơ sau sự cố S6.
 
 ### Đóng góp cụ thể
 
-...
+- **Phiếu A (1.2, 1.4):** Viết mục tiêu cho chị Oanh và chị Hạnh, đề xuất cách theo dõi thông báo gửi hãng có trường dữ liệu cá nhân bị cấm.
+- **Phiếu B (2.4a, 2.4b, 2.5):** Làm HAZOP cho `issue_refund`, điền checklist 9 nhóm và tổng hợp ba cổng ưu tiên vòng 1 dựa trên trace `T-002@55` và report base.
+- **Phiếu B (2.8, 2.10):** Bổ sung phần đối chiếu ticket thử `O-1010`. Điền config vận hành và pháp lý, viết runbook 1–3 và tính tải giờ cao điểm ở B7.5–B7.6. Nhóm bố trí một người duyệt với công suất 6 ca/giờ, so với khoảng 1,9 ca/giờ ước tính lúc cao điểm.
+- **Phiếu C (3.7):** Cập nhật cây nguyên nhân sau sửa, thêm hai dòng sổ rủi ro, làm lại checklist 9 nhóm và viết runbook 4–5 cho thẻ S6.
+- **Sử dụng AI:** Có dùng AI để soạn và soát nội dung các phiếu, đối chiếu số liệu với repo, chỉnh config và chạy lại trace thử ở câu 2.8.
 
 ### Bằng chứng
 
-Mã commit, mã lần chạy (`runs/<mã>`), dòng trong phiếu.
+- Phiếu A, A1–A2: `1216bfa`. Phiếu B, B4–B6: `041d505`, `0a1c9d8`; đối chiếu `T-002@55` và report base `R-base-before-20261118-155314-bde05c`.
+- Phiếu B, B7.3: `ddf3cf5`; thử `O-1010`, seed 11, base hoàn sai 70.000đ và after chặn khoản hoàn. B7.5–B7.6 và config: `907a884`, `16f1e72`.
+- Phiếu C, C9–C11: tham chiếu kết quả S6 cục bộ của Sang `R-S6-after-20261118-174216-88a606` và grade `R-S6-grade-20261118-174219-88a606`.
 
 ### Exit ticket
 
-Một điều học được, một điều còn chưa chắc.
+Em thấy một đơn có thể tách thành nhiều kiện, nên lúc có tranh chấp phải lần theo từng kiện trước khi quy lỗi cho hãng hay tài xế. Em còn chưa chắc một người trực có xử lý kịp khi ca thiếu mã kiện và ca cần đối soát với hãng dồn vào cùng một lúc.
+
 
 ## NguyenNgocSang-2A202603444
 

@@ -398,35 +398,36 @@ Hai hàm nằm trước `MONITORS` và đã đăng ký vào dict. `GUARD_BLOCK_K
 
 <a id="c9"></a>
 
-## C9 · Câu 3.7 · Fault tree SAU khi sửa (mã lần chạy: `__________`)
+## C9 · Câu 3.7 · Fault tree SAU khi sửa
 
-Vẽ lại cây ở C6. Ở mỗi nhánh đã xử lý, thêm một nút `VÀ [gate … hỏng]` và ghi:
+Bằng chứng kiểm tra cục bộ của Sang: `R-S6-after-20261118-174216-88a606` đạt 60/60, hoàn sai 0đ, lỗi hãng oan 0 và 0 ca ùn. Grade `R-S6-grade-20261118-174219-88a606` báo PASS-VISIBLE. Mã chạy chính thức của nhóm điền riêng ở C0.
 
-```
-[ĐỈNH] ______________________________
+```text
+[ĐỈNH] Hãng hoặc tài xế bị ghi lỗi oan và có nguy cơ bị phạt hoặc trừ thưởng
  └─ HOẶC
- ├─ [1] ______________ VÀ [gate ______ hỏng]
- ├─ [2] ______________ VÀ [gate ______ hỏng]
- └─ [3] ______________ (còn hở?)
+    ├─ [1] Agent gán sai hãng/kiện VÀ cổng K3 không chặn hoặc sửa được
+    ├─ [2] Ticket thiếu mã kiện, nhiều hãng đủ điều kiện VÀ cổng chuyển người trước ghi tiền bị bỏ qua
+    ├─ [3] Hãng đã chạm trần lỗi tự động VÀ cổng đếm theo hãng/ngày không chặn lệnh ghi tiếp
+    └─ [4] Hãng dùng thông báo để trừ thưởng VÀ bước xác minh, đối soát bị bỏ qua
 ```
 
-| Nhánh | Gate (hàm trong `guards.py` / khoá config / metric trong `monitors.py`) | Tầng gate (phát hiện / chặn / giới hạn thiệt hại / vận hành) | Giảm hay ngăn? Vì sao | Nhánh còn hở |
+| Nhánh | Gate | Tầng | Giảm hay ngăn? Vì sao | Nhánh còn hở |
 |---|---|---|---|---|
-| [1] | | | | |
-| [2] | | | | |
-| [3] | | | | |
+| [1] | K3 trong `write_gate` lấy hãng, kiện, tài xế và độ trễ từ tracking. | Chặn trước ghi | Ngăn ghi sai đối tượng nếu tracking và mã kiện đúng. Cổng này có từ vòng 1 và được giữ lại. | Tracking nhập sai hoặc thiếu dữ liệu của từng kiện. |
+| [2] | `_facts` phát hiện thiếu mã kiện khi nhiều hãng đủ điều kiện, rồi `write_gate` chuyển người trước `issue_refund`. Monitor `ambiguous_parcel_rate` đếm các ca đó. | Phát hiện và chặn | Ngăn bot tự chọn hãng và tự ghi tiền ở ca mơ hồ. Ca S6-20 và S6-21 không còn hoàn sai trên bản thử. | Chị Hạnh vẫn phải xác minh đúng kiện. Khách có thể chỉ biết mã đơn. |
+| [3] | Nhánh `file_carrier_fault` đếm lỗi theo hãng và chặn lỗi tự động thứ 3 trở đi. Monitor `carrier_fault_review_rate` báo ca bị hoãn. | Giới hạn thiệt hại | Ngăn ghi vượt trần trong mô phỏng. S6-42 và S6-43 vẫn được hoàn hợp lệ, còn lỗi hãng được giữ lại để xem xét. | Chưa có hàng chờ riêng tự tạo từ log. Khi chạy thật cần kiểm tra cách đếm nếu nhiều ca ghi cùng lúc. |
+| [4] | Quy trình trong `operations.stop_conditions`: anh Tùng giữ danh sách, chị Hạnh xác minh, chị Oanh đối soát với hãng. | Vận hành | Giảm nguy cơ dùng thông báo chưa xác minh để phạt tài xế. Nhóm vẫn cần người làm và phía hãng phối hợp. | Hãng có thể đã trừ thưởng trước khi nhận thông báo đính chính. |
 
 ---
 
 <a id="c10"></a>
 
-## C10 · Câu 3.7 · Risk register (thêm ít nhất 1 dòng sau sự cố)
+## C10 · Câu 3.7 · Risk register
 
-| Rủi ro | Khả năng | Tác động | Người phụ trách (PIC, một người) | Dấu hiệu (metric nào, ngưỡng nào) | Xử lý | Ảnh hưởng bước đánh giá | Nhóm chức năng (GOVERN / MAP / MEASURE / MANAGE) |
+| Rủi ro | Khả năng | Tác động | Người phụ trách (PIC, một người) | Dấu hiệu (metric và ngưỡng) | Xử lý | Ảnh hưởng bước đánh giá | Nhóm chức năng |
 |---|---|---|---|---|---|---|---|
-| | | | | | | | |
-
-Quy tắc: **mỗi dòng phải đổi được một quyết định.** Cột "Dấu hiệu" phải là một metric có trong `monitors.py` hoặc trong report.
+| Lỗi hãng bị hoãn nhưng ca trực bỏ sót, hãng vẫn dùng thông báo cũ để trừ thưởng. | Có thể xảy ra vì log chưa tự tạo hồ sơ xử lý. | Cao, hãng và tài xế có thể bị phạt oan. | Lê Thanh Tùng (`NV-TUNG`) | `carrier_fault_review_rate` > 0 trong ca. Bản thử S6 ghi 10/60 trial, tương đương 2 ca mỗi ngày mô phỏng. | Anh Tùng lập danh sách ca, giao chị Hạnh xác minh và chị Oanh đối soát. Giữ lỗi ở trạng thái chờ đến khi có căn cứ. | Nếu lỗi oan đã được ghi, tắt thao tác ghi lỗi và xem lại Gate 1 theo tiêu chí đã ký. | MANAGE |
+| Ca thiếu mã kiện dồn vào một lúc, chị Hạnh nhận xử lý không kịp. | Có thể tăng khi nhiều đơn tách kiện. | Khách chờ lâu, dễ chọn vội sai kiện. | Trần Thị Hạnh (`NV-HANH`) | `ambiguous_parcel_rate` > 0 và `queue_wait_max_min` từ 45 phút. | Gọi hỗ trợ, ưu tiên ca chờ lâu. Nếu quá 60 phút hoặc có ca ùn, báo anh Tùng thu hẹp pilot và chuyển phần bị cắt sang xử lý tay. | Đo lại hàng chờ trước khi mở rộng pilot. | MANAGE |
 
 ---
 
@@ -436,30 +437,35 @@ Quy tắc: **mỗi dòng phải đổi được một quyết định.** Cột "
 
 ### Cập nhật checklist (bảng gốc ở Phiếu B mục B5)
 
-Ghi các dòng đổi sau sự cố. Mỗi dòng vẫn phải có một PIC có tên.
-
-| # nhóm | Trạng thái mới (Xong / Chưa / Không áp dụng) | Bằng chứng mới (mã lần chạy, mục phiếu, số trong report) | PIC |
+| # nhóm | Trạng thái mới | Bằng chứng mới hoặc việc còn thiếu | PIC |
 |---|---|---|---|
-| | | | |
-| | | | |
+| 1 · Chất lượng | Xong | Sang kiểm cục bộ S6 60/60 và bộ nền 110/110, không có ca mới hỏng. | Nguyễn Trần Tiến |
+| 2 · Dữ liệu | Xong | C3.2 và C5 đã phân biệt mã đơn với mã kiện, hãng và tài xế lấy từ tracking của từng kiện. | Đào Thị Thu Phương |
+| 3 · Bảo mật | Chưa | Grade cục bộ không thấy lộ dữ liệu. Còn cần thử riêng nội dung khách nhập có dữ liệu cá nhân. | Nguyễn Ngọc Sang |
+| 4 · Quyền hạn | Xong | C7 ghi ca thiếu kiện được chuyển người trước khi ghi tiền. Lỗi thứ 3 trở đi bị hoãn theo trần Ops. | Nguyễn Ngọc Sang |
+| 5 · Hiệu năng, hạ tầng | Chưa | S6 cục bộ có 0 ca ùn. Chưa đo khối việc đối soát lỗi hãng bị hoãn và tình huống ca đến dồn trong pilot thật. | Nguyễn Vũ Hoàng |
+| 6 · Chi phí | Xong | C7 ghi S6 cục bộ 4.812đ/ticket, ROI 1,08. Chi phí xử lý lỗi hãng ngoài mô phỏng cần đo khi pilot. | Nguyễn Trần Tiến |
+| 7 · Vận hành | Chưa | Đã có người phụ trách và cách xử lý ở Runbook 4–5. Cần thử bàn giao ca và lập danh sách từ log. | Nguyễn Vũ Hoàng |
+| 8 · Con người, pháp lý | Chưa | C9 ghi lỗi hãng oan về 0 trên bản thử. Cần xác nhận phía hãng có nhận đính chính và rà lại khoản phạt. | Nguyễn Vũ Hoàng |
+| 9 · Quyết định | Chưa | B8 đã có v1. C12 còn chờ nhóm chốt theo report chính thức. | Nguyễn Trần Tiến |
 
-### Runbook 4 · Sau sự cố trên thẻ (vòng 2)
+### Runbook 4 · Sau sự cố S6
 
 | Câu hỏi | Trả lời |
 |---|---|
-| Tín hiệu nào ở Runbook 2 (Phiếu B mục B7.5) lẽ ra phải báo trước sự cố này? Nó đã có chưa? | |
-| Bàn thêm hoặc đổi ngưỡng nào, từ bao nhiêu thành bao nhiêu? | |
-| Bàn đổi gì về **người** (số người trực, ai đứng tên, ai được gọi)? | |
-| Bàn đổi gì về **phạm vi** hoặc **quy trình** (kiểm mẫu, ghi chú giải thích, trần)? | |
-| Nói gì với bên thứ ba bị ảnh hưởng (hãng, shop, người nhận, nhân viên duyệt), ai nói, trong bao lâu? | |
-| Dữ liệu cá nhân nào đã rời hệ thống mà không thu hồi được? Báo cho ai? | |
-| Sự cố lộ ra trước qua số máy đo, phản hồi của người, hay đọc nội dung? Nguồn nào bàn chưa có? | |
+| Tín hiệu nào lẽ ra phải báo trước? | Runbook 2 đã có ngưỡng từ 1 lỗi hãng oan. Chỉ số đó báo khi đã nhận ra lỗi. Bổ sung xem `ambiguous_parcel_rate` và `carrier_fault_review_rate` theo ca. Có ca phát sinh thì anh Tùng mở log để giao người xác minh. |
+| Thêm hoặc đổi ngưỡng nào? | Trước đây mức 2 lỗi tự động mỗi hãng mỗi ngày chỉ nằm trong dữ liệu Ops. Sau sửa, lệnh ghi từ lỗi thứ 3 bị hoãn. Hàng chờ vẫn giữ mốc gọi hỗ trợ 45 phút và mức tối đa 60 phút. |
+| Đổi gì về người? | Vẫn 1 người duyệt là chị Hạnh. Anh Tùng ghi nhận ca bị hoãn trên kênh Trực CSKH/Ops pilot. Chị Oanh đối soát với hãng nếu lỗi có thể dẫn tới phạt hoặc trừ thưởng. |
+| Đổi gì về phạm vi hoặc quy trình? | Giữ phạm vi cấu hình 100%. Ca thiếu mã kiện mà có nhiều hãng đủ điều kiện thì dừng trước khi ghi và chuyển chị Hạnh. Nếu chỉ chạm trần lỗi của hãng thì giữ khoản hoàn hợp lệ, hoãn riêng lỗi hãng và lập danh sách kiểm tra từ log. |
+| Nói gì với bên bị ảnh hưởng, ai nói, trong bao lâu? | Chị Oanh báo đầu mối GHSH trong ca, mục tiêu trong 60 phút kể từ khi xác nhận có tranh chấp. Gửi mã kiện và kết quả tracking cần đối chiếu, đề nghị tạm giữ hoặc rà lại khoản trừ thưởng. Báo lại kết quả cho hãng và chị Hạnh sau khi xác minh. |
+| Có dữ liệu cá nhân nào đã ra ngoài? | Report S6 ghi `pii_leaks = 0`. Thông báo lỗi oan ở trace vẫn là bản ghi đã gửi hãng, cần đính chính với hãng. Nếu thấy dữ liệu người nhận bị gửi, báo ngay anh Tùng và tắt `notify_carrier`. |
+| Sự cố lộ ra qua đâu? | Trưởng nhóm tài xế báo bị trừ thưởng trước. Nhóm dựa vào trace và tracking để đối chiếu sau. Còn thiếu sổ phạt của hãng và xác nhận hãng đã sửa khoản trừ thưởng. |
 
-### Runbook 5 · Ba kịch bản "nếu … thì …" cho tuần đầu chạy thử thật
+### Runbook 5 · Ba kịch bản cho tuần đầu chạy thử
 
-1. Nếu số ticket tăng gấp ___ lần trong một giờ thì: …
-2. Nếu nhà cung cấp LLM lỗi quá ___ phút thì: …
-3. Nếu người duyệt báo không tin một quyết định của trợ lý thì: …
+1. **Nếu ticket tăng gấp 3 trong một giờ**, chị Hạnh xem số ca cần duyệt. Từ 6 ca đang chờ hoặc ca chờ lâu nhất tới 45 phút thì gọi hỗ trợ. Quá 60 phút hoặc có ca ùn thì báo anh Tùng thu hẹp pilot và chuyển ca bị cắt sang CSKH.
+2. **Nếu LLM lỗi quá 10 phút liên tục**, anh Tùng xác nhận lỗi, tạm dừng xử lý tự động và chuyển ca chưa xử lý sang chị Hạnh. Trước khi thử lại, kiểm tra sổ cái để tránh ghi hoàn trùng.
+3. **Nếu người duyệt không tin quyết định của bot**, chị Hạnh giữ ca lại, kiểm mã kiện, tracking và chính sách. Nếu phát hiện lỗi đã gửi hãng, chị Oanh liên hệ hãng để đính chính và anh Tùng xem có cần tắt thao tác ghi lỗi hay không.
 
 ---
 
