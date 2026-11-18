@@ -310,10 +310,10 @@ Mỗi con số kèm một câu lý do, lấy từ `data/world.json` → `ops_lim
 
 | Khoá | Giá trị bàn đặt | Lý do (một câu, có số) |
 |---|---|---|
-| `business.daily_refund_cap_vnd` | | |
-| `business.cost_budget_per_ticket_vnd` | | |
-| `business.pilot_scope` (all / warehouse / percent) | | |
-| `business.roi_min` | | |
+| `business.daily_refund_cap_vnd` | 500.000 | Ngày hoàn tự động nhiều nhất ở base (`R-base-before-20261118-155314-bde05c`) là 155.000 đ; nhân ba cho ngày cao điểm ≈ 465.000 đ nên đặt 500.000, vẫn thấp hơn nhiều ngân sách Finance 2.000.000 đ/ngày (`daily_auto_refund_budget_vnd`). |
+| `business.cost_budget_per_ticket_vnd` | 1.500 | Đúng trần tiền máy đã thống nhất với Ops và Finance (`max_llm_cost_per_ticket_vnd` 1.500 đ); ticket tốn nhiều nhất ở base mới 670 đ nên không chặn nhầm ca đang đúng. |
+| `business.pilot_scope` (all / warehouse / percent) | `all` (100%) | Base không có ticket ngoài phạm vi (độ phủ 1,0) và 4/5 kho đạt pass_rate 1,0; kho HCM chỉ hỏng vì `T-002@55`, sửa bằng cổng chứ không cần cắt kho. Giữ `all` để dành quyền Thu hẹp cho vòng 2. |
+| `business.roi_min` | 0,3 | Khớp `roi_min` trong tiêu chí đã ký. Base ROI 1,34; mỗi người trực thêm tốn 30.000 đ/ngày (`reviewer_standby_fee_vnd`), ước tính tay ROI còn ≈ 0,76 khi thêm 1 người và ≈ 0,42 khi thêm 2, nên không nên quá 3 người trực. |
 
 ### B7.5 · Câu 2.10 · Cổng con người, vận hành, pháp lý + Runbook phần 1–3
 
