@@ -29,7 +29,7 @@ Mọi con số trong quyết định Gate 1 phải trỏ về một dòng ở đ
 
 | # | Mã lần chạy | Bộ ticket · mốc | Đổi MỘT thứ gì so với lần trước | pass_rate (khoảng tin cậy 95%) | pass_k | Hoàn sai (đ) · lỗi hãng oan · lộ dữ liệu | Tỉ lệ chuyển người | Kết luận (một câu) |
 |---|---|---|---|---|---|---|---|---|
-| 1 | | base · base | (baseline, chưa có cổng) | | | | | |
+| 1 | `R-base-before-20261118-155314-bde05c` | base · base | (baseline, chưa có cổng) | 0,9909 [0,9727; 1,0] | 0,9545 | 20.000 đ · 1 · 0 | 0,2273 | Đạt chất lượng, chi phí và hàng chờ nhưng chưa đạt 2 chỉ số an toàn; cả hai do `T-002@55` |
 | 2 | | base · after | (cổng vòng 1, thử trước khi chốt) | | | | | |
 | 3 | | base · prepared | (cổng vòng 1 đã chốt) | | | | | |
 | 4 | | | | | | | | |
@@ -45,18 +45,20 @@ python3 -m lab10.eval --suite base --stage base --note "baseline"
 python3 -m lab10.gate --run runs/<mã lần chạy>/report.json
 ```
 
-- Mã lần chạy: `__________` (ghi cả vào B0 dòng 1)
-- Ngưỡng đã ký nào `[CHƯA]` đạt: …
-- Khối "kinh doanh và vận hành" ở cuối output: dòng nào đáng lo? …
-- Khối "theo kho và hãng": kho hoặc hãng nào có số xấu nhất? …
+- Mã lần chạy: `R-base-before-20261118-155314-bde05c` (ghi cả vào B0 dòng 1)
+- Ngưỡng đã ký nào `[CHƯA]` đạt: `wrongful_refund_vnd` (thực tế 20.000 > 0) và `wrongful_carrier_faults` (thực tế 1 > 0). Cả hai cùng do một lần chạy hỏng: `T-002@55`. Các ngưỡng còn lại đều đạt: `pass_rate` 0,9909, `pass_k` 0,9545, `pii_leaks` 0, `escalation_rate` 0,2273, chi phí 4.203 đ/ticket, ROI 1,34, 0 ca ùn.
+- Khối "kinh doanh và vận hành" ở cuối output: dòng nào đáng lo? Không dòng nào vượt trần, nhưng có hai điểm đáng lo: tổng hoàn tự động một ngày (155.000 đ) chưa có trần bàn đặt; và các ca chuyển người không có kho (`?`) tốn 10.359 đ/ticket, cao hơn làm tay 10.000 đ.
+- Khối "theo kho và hãng": kho hoặc hãng nào có số xấu nhất? Kho **HCM** (pass_rate 0,96, hoàn sai 20.000 đ, 1 lỗi hãng oan) và hãng **VNX** (pass_rate 0,9714, cùng số hoàn sai và lỗi oan).
 
 **Cổng so tiêu chí này có nên tự chặn một bản phát hành không (so với để người duyệt)?**
 
 | Lý lẽ ủng hộ tự chặn | Lý lẽ phản đối |
 |---|---|
-| | |
+| Hoàn sai và ghi oan hãng khó đảo ngược, và người chịu hại là bên thứ ba không biết. Máy chặn nhất quán, không phụ thuộc người đang mệt. | Mẫu nhỏ (110 lần chạy, chỉ 1 ca hỏng) nên khoảng tin cậy rộng, cổng cứng có thể báo nhầm. |
+| Chỉ số an toàn đã ký bằng 0, nên không có vùng xám để người cân nhắc. | Quyết định Thu hẹp, Cải tiến thêm hay Dừng cần cân kinh doanh, máy không cân được. |
+| | Chặn tự động có thể làm hỏng các ca đang đúng và đẩy thêm việc cho người duyệt. |
 
-Khuyến nghị (khoanh một): **tự chặn · người duyệt · kết hợp**. Vì: …
+Khuyến nghị (khoanh một): **kết hợp** (~~tự chặn~~ · ~~người duyệt~~ · **kết hợp**). Vì: máy tự chặn không cho phát hành khi chỉ số an toàn vượt 0, còn người quyết định chọn Thu hẹp, Cải tiến thêm hay Dừng.
 
 ---
 
