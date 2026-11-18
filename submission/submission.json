@@ -1,12 +1,17 @@
 {
-  "team": "",
-  "members": [],
+  "team": "K5-L3A-DAY10-NgonThia-PoCtoPilotGate1",
+  "members": [
+    "NguyenTranTien-2A202603504",
+    "NguyenVuHoang-2A202603491",
+    "NguyenNgocSang-2A202603444",
+    "DaoThiThuPhuong-2A202603457"
+  ],
   "incident": "S6",
-  "decision_v1": "",
-  "decision_v2": "",
+  "decision_v1": "Tiếp tục",
+  "decision_v2": "Tiếp tục",
   "three_lines": {
-    "environment_assumption": "",
-    "reduce_or_prevent": "",
-    "measure_in_pilot": ""
+    "environment_assumption": "Thiết kế giả định tracking của hãng (`parcels[].carrier_id`, `driver_id`, `delivered_date`, `delay_cause`) là nguồn sự thật đúng và đầy đủ, nhưng ngoài thực tế điểm phát có thể quét sót hoặc nhập bù tay nên mã kiện và nguyên nhân trễ có thể sai, và hãng có thể đã trừ thưởng tài xế trước khi nhận thông báo đính chính.",
+    "reduce_or_prevent": "Trong mô phỏng thì NGĂN: cổng chặn ở `write_gate` trước lệnh ghi và chỉ đọc tracking, không đọc chữ của ticket, nên hoàn sai 270.000 đ và 20 lỗi hãng oan về 0 trên 60 lần chạy S6; nhưng ngoài hệ thống chỉ GIẢM, vì ca bị hoãn vẫn cần người xác minh và hãng vẫn có thể phạt tài xế trước khi nhận đính chính.",
+    "measure_in_pilot": "Cần đo tỉ lệ đơn tách kiện nhiều hãng thật (mô phỏng chỉ 2/12 ticket mỗi ngày, 16,7%), thời gian và chi phí người xử lý ca bị hoãn hoặc mơ hồ (ước 1.667 đ/ticket, tổng sát 7.000 đ), độ chính xác của tracking thật, và kết quả trên bài kiểm tra ẩn với đơn, khách, cách viết khác."
   }
 }

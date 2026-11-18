@@ -28,19 +28,38 @@ Mỗi thành viên tự viết một mục bên dưới (chép mẫu, đổi ti�
 
 ### Phần việc phụ trách
 
-Sản phẩm và kinh doanh (trưởng nhóm), giữ máy chạy lệnh chính. Chi tiết xem [`chia-viec.md`](chia-viec.md): Phiếu A, `config/acceptance_criteria.json` (ký), `config/operating_gates.json` mục `business`, lệnh 1–7, quyết định v1 và v2.
+Sản phẩm và kinh doanh, trưởng nhóm, giữ máy chạy lệnh chính (các lệnh có mã lần chạy đều chạy trên máy này vì thư mục `runs/` không lên GitHub). Chi tiết phân việc xem [`chia-viec.md`](chia-viec.md).
+
+- Đề: câu 1.1 · 1.6 · 2.1 · 2.9 · quyết định v1 (B8) và v2 (C12) · ba dòng bắt buộc (chủ trì).
+- Phiếu: A mục A1 (1.1), A4 (1.6), A5 · B mục B0, B1, B7.4, B8 · C mục C0, C1, C10, C12.
+- File: `config/acceptance_criteria.json` (điền và ký một lần), `config/operating_gates.json` mục `business`, `submission/submission.json`.
+- PIC các dòng Chất lượng, Chi phí và Quyết định trong checklist 9 nhóm việc (Phiếu B mục B5).
 
 ### Đóng góp cụ thể
 
-...
+**Vòng 1**
+- **Khởi tạo repo và nhóm:** tạo repo từ template, gắn `upstream`, điền bảng thành viên trong `TEAM.md`, viết `chia-viec.md` để chia việc và chỉ rõ ai chờ ai, đưa PRD v1.1 và eval card Lab 9 của tôi vào `lab9-ref/` làm tài liệu chung.
+- **Tiêu chí (câu 1.1, 1.6):** viết mục tiêu cấp hệ thống, sáu câu "Nếu … thì chúng tôi sẽ …", hai câu ranh giới đầu ra và bốn câu soát; điền `acceptance_criteria.json` (ba chỉ số an toàn bằng 0, `pass_rate` ≥ 0,90, `pass_k` ≥ 0,80, chi phí ≤ 7.000 đ/ticket, ROI ≥ 0,3, 0 ca ùn) rồi **ký trước lần đo đầu tiên** (15:50), push ngay.
+- **Đo và quyết định:** chạy các lệnh chính thức trên máy tôi: base (`R-base-before-…-bde05c`, chưa đạt 2 chỉ số an toàn do `T-002@55`), after (`R-base-after-…-13ea92`, 9/9 đạt), chốt cổng vòng 1 (`d950ec13`) và prepared (`R-base-prepared-…-e22afc`). Điền B0, B1 (lý lẽ tự chặn hay người duyệt).
+- **Cổng kinh doanh (câu 2.9, B7.4):** đặt `daily_refund_cap_vnd` 500.000, `cost_budget_per_ticket_vnd` 1.500, `pilot_scope` = tất cả, `roi_min` 0,3, mỗi số có lý do từ `ops_limits` và `ops_facts`. Gửi Hoàng số ca mỗi giờ (≈ 2,75 ticket/giờ thường, ≈ 8 ticket/giờ cao điểm) để viết runbook.
+- **Quyết định v1 (B8):** chọn Tiếp tục vì report không còn ngưỡng chưa đạt hay dòng vượt trần, ghi rõ bằng chứng còn thiếu là gói sự cố và bài kiểm tra ẩn.
+
+**Vòng 2 (thẻ S6)**
+- Nhận thẻ, ghi `Thẻ đã bốc: S6`, chạy `grade --incident S6` trên mốc prepared. Phát hiện `1 integrity ❌` do 19 file khoá bị Git đổi sang CRLF (`core.autocrlf=true`), kiểm từng file khớp hash khi quy về LF rồi khôi phục, chạy lại được `1 integrity ✅`.
+- Điền C0, C1; sau khi Sang sửa `guards.py` và Hoàng bổ sung quy trình vận hành, chạy lại chính thức `eval --suite S6 --stage after`, `eval --suite base --stage after` và `grade`, thay mã lần chạy cục bộ của máy Sang bằng mã chính thức ở C7 đến C10, điền C12 (v2: giữ Tiếp tục), ba dòng bắt buộc và `submission.json`.
+
+**Sử dụng AI.** Có dùng Claude (Claude Code trong VS Code và claude.ai) để đọc đề và code, soạn nháp các mục trong Phiếu A, B, C, soạn `chia-viec.md`, chạy các lệnh theo yêu cầu của tôi và soát lại số liệu với report. Các ngưỡng trong tiêu chí, các con số trong `operating_gates.json` mục `business` và quyết định v1, v2 là do tôi chọn và giải thích được; tôi tự chạy lệnh ký tiêu chí.
 
 ### Bằng chứng
 
-Mã commit, mã lần chạy (`runs/<mã>`), dòng trong phiếu.
+- Tiêu chí: commit ký `206dccc` (15:50, trước mọi lần đo), A1 và A4 `7b1194c`, A5 `f2013ed`. Hash tiêu chí `37806ada` còn nguyên trong mọi report.
+- Cổng `business` (B7.4) `244f442`. Chốt vòng 1 và v1 `c1e4a26` (hash chốt `d950ec13`); PIC ký và ngày quyết định lại `1992317`.
+- Mã lần chạy vòng 1: base `R-base-before-20261118-155314-bde05c`, after `R-base-after-20261118-164904-13ea92`, prepared `R-base-prepared-20261118-171152-e22afc` (Phiếu B, B0 dòng 1 đến 3).
+- Vòng 2: thẻ `f3461b0`; C0 và C1 `3b85690`; mã chính thức S6 after `R-S6-after-20261118-215633-88a606`, bộ nền `R-base-after-20261118-215634-88a606`, grade `R-S6-grade-20261118-215638-88a606` (**PASS-VISIBLE**); C7 đến C12 và mã chính thức `24b577b`.
 
 ### Exit ticket
 
-Một điều học được, một điều còn chưa chắc.
+Điều học được: ngưỡng phải viết và ký trước khi nhìn số, và cổng đặt ngoài model (ở bước ghi, đọc từ tracking thay vì từ chữ của ticket) mới thật sự chặn được tác hại; một lỗi chìm như `T-002@55` khách không thấy sai nhưng hãng chịu thiệt. Điều còn chưa chắc: chi phí thực tế khi tính cả công người xử lý các ca bị hoãn (ước khoảng 6.479 đ/ticket, sát ngưỡng 7.000 đ, chưa đo) và kết quả trên bài kiểm tra ẩn, vì dữ liệu ở đây là mock và mẫu nhỏ.
 
 ## NguyenVuHoang-2A202603491
 
