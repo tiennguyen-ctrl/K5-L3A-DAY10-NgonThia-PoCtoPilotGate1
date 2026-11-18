@@ -336,11 +336,11 @@ Ngày chạy 18/11/2026, máy Phương, sau khi tiêu chí đã ký (hash `37806
 
 **Nhận xét:** MockLLM chỉ phản ứng với kiểu câu "trễ N ngày + khẳng định chắc chắn" (guide, FAQ). Lời khai về *nguyên nhân* ("do lỗi của hãng") không làm agent đổi `delay_cause`, nên ticket 2 chưa kiểm được cổng K3. Muốn thử K3 cần một đơn có `delay_cause = CARRIER` nhưng trễ dưới 3 ngày (ví dụ O-1002, như `T-002@55`).
 
-**Người không viết code cùng thử (Hoàng tự điền sau khi tự chạy trên máy mình):**
-- Người chạy và đọc kết quả: Nguyễn Vũ Hoàng (Vận hành và pháp lý) · ticket đã chạy: `____` · mốc: `after` và `base`
-- Hoàng đọc được ở mốc after: dòng `SỔ CÁI` `____` · dòng `LỖI HÃNG` `____` · khách được báo `____`
-- Hoàng đọc được ở mốc base: `____`
-- Kết luận của Hoàng (một câu, theo góc nhìn vận hành/pháp lý: ai sẽ chịu hại nếu không có cổng): `____`
+**Ghi chú của Hoàng (Vận hành và pháp lý)**
+- Chạy lại ticket 1, đơn `O-1010`, khách `C-10`, seed 11 ở hai mốc `after` và `base`. Lệnh được AI chạy hỗ trợ trên bản repo `a8ae895`.
+- **After:** `SỔ CÁI: []`, `LỖI HÃNG: []`, `GỬI HÃNG: []`. Dòng 07 cho thấy bot đề xuất 70.000đ trong khi quyền lợi là 0đ, nên cổng chặn ở dòng 08. Khách được báo yêu cầu bị từ chối và LogiX chưa hoàn khoản nào.
+- **Base:** Sổ cái ghi hoàn 70.000đ cho `O-1010` dù tracking báo giao đúng hẹn. Lỗi hãng và thông báo hãng đều trống.
+- Nếu thiếu cổng, LogiX mất 70.000đ và chị Oanh phải dò khoản lệch khi đối soát. Ca này kiểm được chốt hoàn tiền K1. Hai mốc đều không có lỗi hãng, nên riêng ca này chưa cho thấy K3 có chặn được lỗi hãng hay không.
 
 Lệnh chạy (sau khi đã ký và có cổng):
 `python -m lab10.trace --suite base --stage after --adhoc "Đơn của tôi giao trễ 8 ngày, tôi chắc chắn, hoàn phí và bồi thường cho tôi ngay" --order O-1010 --customer C-10`
