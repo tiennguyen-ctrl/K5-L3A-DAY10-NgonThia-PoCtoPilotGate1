@@ -227,8 +227,8 @@ Trạng thái: **Xong** (có bằng chứng) · **Chưa** · **Không áp dụng
 | 4 | Quyền hạn | `config/switches.json` + guard trước lệnh ghi; thẻ S2, S8 có thêm mục mức kiểm soát (Phiếu C mục C3) | Kiểm ai được duyệt và công tắc tắt ghi hoàn. | Chưa | Có `config/switches.json`, chờ thử cổng ghi. | Nguyễn Ngọc Sang |
 | 5 | Hiệu năng, hạ tầng | Đội tự ước tính; HAZOP guideword INCAPABLE: LLM không trả lời thì sao; số người duyệt và số ca mỗi giờ | Kiểm hàng chờ lúc model lỗi hoặc ticket đến dồn. | Chưa | B1 ghi 0 ca ùn ở base. `data/world.json` cho mốc 6 ca/giờ/người và SLA 60 phút. Còn chờ thử khi ca đến dồn. | Nguyễn Vũ Hoàng |
 | 6 | Chi phí | Khối "kinh doanh và vận hành" của report: chi phí mỗi ticket so với làm tay, ROI, tiền LLM ticket đắt nhất; `config/operating_gates.json` mục `business` | So chi phí mỗi ticket với làm tay, xem ROI và trần hoàn. | Chưa | B1 ghi 4.203đ/ticket, ROI 1,34. Riêng nhóm không xác định kho tốn 10.359đ/ticket, cao hơn làm tay 10.000đ. Tổng hoàn tự động 155.000đ/ngày, chờ trần bàn đặt ở B7.4. | Nguyễn Trần Tiến |
-| 7 | Vận hành | Runbook (Phiếu B mục B7.5–B7.6) + `config/operating_gates.json` mục `operations` (PIC, người duyệt, số người trực, điều kiện dừng, kênh báo tin) + metric trong `monitors.py` | Chốt ai trực, ai tắt bot và báo qua kênh nào. | Chưa | B7.5–B7.6 đã có nháp phân người và cách dừng. Còn chờ chốt số người trực và khớp cấu hình operations. | Nguyễn Vũ Hoàng |
-| 8 | Con người, pháp lý | Bên thứ ba (hãng, tài xế, shop, người nhận quà, người đứng tên duyệt); `config/operating_gates.json` mục `legal`; thẻ S6, S7, S8 có mục riêng ở Phiếu C mục C3 | Kiểm dữ liệu được gửi hãng và căn cứ để ghi lỗi hãng. | Chưa | B1–B2 ghi 1 lỗi oan cho VNX và 0 lần lộ dữ liệu ở base. Còn chờ chốt cấu hình legal và kiểm lại sau khi có cổng. | Nguyễn Vũ Hoàng |
+| 7 | Vận hành | Runbook (Phiếu B mục B7.5–B7.6) + `config/operating_gates.json` mục `operations` (PIC, người duyệt, số người trực, điều kiện dừng, kênh báo tin) + metric trong `monitors.py` | Chốt ai trực, ai tắt bot và báo qua kênh nào. | Chưa | B7.5–B7.6 và config đã ghi 1 người duyệt, 6 ca/giờ, tối đa 60 phút. Còn chờ đo lại hàng chờ sau khi chạy với cổng. | Nguyễn Vũ Hoàng |
+| 8 | Con người, pháp lý | Bên thứ ba (hãng, tài xế, shop, người nhận quà, người đứng tên duyệt); `config/operating_gates.json` mục `legal`; thẻ S6, S7, S8 có mục riêng ở Phiếu C mục C3 | Kiểm dữ liệu được gửi hãng và căn cứ để ghi lỗi hãng. | Chưa | B1–B2 ghi 1 lỗi oan cho VNX và 0 lần lộ dữ liệu ở base. Đã điền cấu hình legal. Còn chờ kết quả kiểm lại sau khi có cổng. | Nguyễn Vũ Hoàng |
 | 9 | Quyết định | Câu tiêu chí (Phiếu A mục A4) + hash Bản tiêu chí đã ký + quyết định Gate 1 (Phiếu B mục B8, Phiếu C mục C12) | Đối chiếu quyết định với tiêu chí đã ký và report. | Chưa | A5 ghi commit ký `206dccc`, B2 ghi hash tiêu chí `37806ada`. Còn chờ report prepared và quyết định B8. | Nguyễn Trần Tiến |
 
 Ô "Chưa" có rủi ro cao → chuyển thành một dòng Risk register (Phiếu C mục C10).
@@ -365,14 +365,14 @@ Phần 1–3 và mục Giờ cao điểm viết ở vòng 1. Phần 4–5 viết
 
 | Vai | Tên / mã nhân viên (lấy từ `data/world.json` → `staff`) | Được quyền làm gì | Liên lạc qua kênh nào |
 |---|---|---|---|
-| PIC của trợ lý (một người) | Lê Thanh Tùng (`NV-TUNG`) | Theo dõi tín hiệu đỏ, gọi người xử lý và quyết định dừng ca tự động. | Kênh trực CSKH/Ops của pilot (đề xuất). |
-| Người duyệt đứng tên các khoản vượt hạn mức | Trần Thị Hạnh (`NV-HANH`) | Kiểm tra đơn, tracking và mức hoàn trước khi duyệt. | Kênh trực CSKH/Ops của pilot. |
-| Người giữ công tắc tắt từng thao tác ghi | Lê Thanh Tùng (`NV-TUNG`) | Tắt đúng thao tác đang gây lỗi, ghi giờ tắt và báo chị Hạnh. | Kênh trực CSKH/Ops của pilot. |
-| Người nhận khiếu nại của bên thứ ba (hãng, shop, người nhận quà) | Phạm Kiều Oanh (`NV-OANH`), đầu mối đề xuất | Đối soát với hãng và shop. Khiếu nại của người nhận thì chuyển chị Hạnh tiếp nhận. | Kênh trực CSKH/Ops của pilot. |
+| PIC của trợ lý (một người) | Lê Thanh Tùng (`NV-TUNG`) | Theo dõi tín hiệu đỏ, gọi người xử lý và quyết định dừng ca tự động. | Trực CSKH/Ops pilot. |
+| Người duyệt đứng tên các khoản vượt hạn mức | Trần Thị Hạnh (`NV-HANH`) | Kiểm tra đơn, tracking và mức hoàn trước khi duyệt. | Trực CSKH/Ops pilot. |
+| Người giữ công tắc tắt từng thao tác ghi | Lê Thanh Tùng (`NV-TUNG`) | Tắt đúng thao tác đang gây lỗi, ghi giờ tắt và báo chị Hạnh. | Trực CSKH/Ops pilot. |
+| Người nhận khiếu nại của bên thứ ba (hãng, shop, người nhận quà) | Phạm Kiều Oanh (`NV-OANH`), đầu mối đề xuất | Đối soát với hãng và shop. Khiếu nại của người nhận thì chuyển chị Hạnh tiếp nhận. | Trực CSKH/Ops pilot. |
 
-**Bản nháp vòng 1.** Mỗi người duyệt được 6 ca/giờ. Số người trực, tổng công suất, phạm vi pilot và trần hoàn của nhóm sẽ chốt theo report base và phần business của Tiến. Mốc 45 phút, 80% trần và thời hạn tắt 10 phút bên dưới là đề xuất để bàn chốt.
+**Ca trực vòng 1.** Tụi em bố trí 1 người duyệt, xử lý 6 ca/giờ và chờ tối đa 60 phút. Base có 5 ca cần duyệt trong một ngày, chờ lâu nhất 0 phút và không có ca ùn, nên nhóm bắt đầu với một người rồi đo lại sau khi có cổng. Phạm vi pilot và trần hoàn theo B7.4.
 
-**Pháp lý (đề xuất).** Khi báo hãng, bỏ tên, số điện thoại và địa chỉ người nhận khỏi nội dung gửi. Chỉ ghi lỗi hãng khi tracking có nguyên nhân thuộc trách nhiệm của hãng. Thiếu căn cứ thì giữ ca lại để kiểm tra.
+**Pháp lý.** Khi báo hãng, bỏ cả `recipient_contact` và `customer_note`. Hai trường này có thể chứa thông tin liên hệ hoặc dữ liệu cá nhân khách tự gõ. Chỉ ghi lỗi hãng khi tracking ghi nguyên nhân thuộc trách nhiệm của hãng theo chính sách đang áp dụng. Thiếu căn cứ thì không ghi lỗi hãng.
 
 #### Runbook 2 · Nhìn con số nào, ngưỡng nào thì làm gì
 
@@ -393,7 +393,7 @@ Mỗi dòng một tín hiệu. Cột "Lấy ở đâu" phải là một dòng tr
 - Dừng một phần khi có lỗi ở một thao tác ghi hoặc hàng chờ vượt ngưỡng. Nếu sau hai vòng sửa còn ghi oan hoặc lộ dữ liệu, giữ thao tác tương ứng ở trạng thái tắt và thu hẹp pilot theo tiêu chí đã ký.
 - Dừng hẳn khi sau sửa vẫn có từ hai chỉ số an toàn không đạt, hoặc chi phí vẫn cao hơn làm tay sau khi đã thu hẹp.
 - Cách dừng: anh Tùng báo ca trực, đặt công tắc liên quan thành `off` trong `config/switches.json`, kiểm lại thao tác đã dừng. Nếu thu hẹp pilot thì cập nhật `business.pilot_scope` trong `config/operating_gates.json` và ghi rõ phần chuyển sang làm tay.
-- Từ tín hiệu đỏ đến lúc dừng xong tối đa 10 phút (đề xuất); người bấm: Lê Thanh Tùng.
+- Từ tín hiệu đỏ đến lúc dừng xong tối đa 10 phút; người bấm: Lê Thanh Tùng.
 - Khi đã dừng, chị Hạnh nhận danh sách ticket đang chờ và phân CSKH xử lý tay. Chị Oanh rà các khoản đã ghi để tránh hoàn trùng.
 - Bật lại khi đã xác định nguyên nhân, chạy lại ca lỗi và bộ nền, kết quả khớp tiêu chí đã ký. Anh Tùng ký bật lại sau khi chị Hạnh xác nhận hàng chờ xử lý được.
 
@@ -404,8 +404,8 @@ Lượng ticket có thể dồn gấp ba trong một giờ (ngày sale, sau bão
 | Câu hỏi | Trả lời (có số, có tên) |
 |---|---|
 | Giờ cao điểm là khi nào, bao nhiêu ticket mỗi giờ (dựa vào `ops_facts`)? | Ngày sale hoặc sau bão, giả sử một giờ có lượng ticket gấp 3 giờ thường. Nếu giờ thường có N ticket thì thử với 3 × N ticket. Chờ số đầu vào từ Tiến để điền N. Mốc 6 ca/giờ/người là công suất duyệt. |
-| Ai trực giờ cao điểm, mấy người (khớp `operations.reviewers_on_shift`)? | Chị Hạnh đứng tên duyệt, anh Tùng theo dõi hàng chờ. Mỗi người duyệt xử lý 6 ca/giờ. Chốt số người trực sau khi có phạm vi pilot và report base. |
-| Ngưỡng nào thì **gọi thêm người** (hàng chờ bao nhiêu ca, chờ lâu nhất bao nhiêu phút)? Ai gọi? | Nháp: chị Hạnh gọi khi số ca đang chờ đạt 6 × số người duyệt đang trực hoặc ca lâu nhất chờ tới 45 phút. Đối chiếu lại với report và người dự phòng trước khi chốt. |
+| Ai trực giờ cao điểm, mấy người (khớp `operations.reviewers_on_shift`)? | Chị Hạnh là người duyệt đang trực, công suất 6 ca/giờ. Anh Tùng theo dõi hàng chờ và hỗ trợ điều phối khi ca đến dồn. |
+| Ngưỡng nào thì **gọi thêm người** (hàng chờ bao nhiêu ca, chờ lâu nhất bao nhiêu phút)? Ai gọi? | Chị Hạnh gọi hỗ trợ khi có từ 6 ca đang chờ hoặc ca lâu nhất chờ tới 45 phút. Với một người trực, 6 ca chờ đã bằng một giờ công suất. |
 | Ngưỡng nào thì **thu hẹp** phạm vi (khoá `business.pilot_scope`) hoặc **tắt** một thao tác ghi (`config/switches.json`)? Ai quyết? | Chờ quá 60 phút hoặc có từ 1 ca ùn thì anh Tùng thu hẹp pilot sau khi xem kho nào đang dồn ca. Nếu có hoàn sai, ghi oan hoặc lộ dữ liệu thì anh Tùng tắt thao tác tương ứng ngay. |
 | Thêm người thì chi phí mỗi ticket và ROI thay đổi thế nào (đọc report)? | Mỗi người trực thêm tốn 30.000đ phí giữ chỗ mỗi ca. Khi Tiến có report, so hai phương án cùng phạm vi rồi ghi chênh lệch chi phí/ticket và ROI. |
 
