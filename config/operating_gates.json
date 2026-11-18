@@ -7,18 +7,18 @@
     "roi_min": 0.3
   },
   "operations": {
-    "pic": "",
-    "approver_id": "",
+    "pic": "NV-TUNG",
+    "approver_id": "NV-HANH",
     "reviewers_on_shift": 1,
-    "review_capacity_per_hour": null,
-    "max_queue_wait_minutes": null,
-    "stop_conditions": [],
-    "alert_channel": "",
+    "review_capacity_per_hour": 6,
+    "max_queue_wait_minutes": 60,
+    "stop_conditions": ["Chờ duyệt quá 60 phút hoặc có ít nhất một ca ùn thì thu hẹp pilot và chuyển phần còn lại sang CSKH xử lý tay.", "Có tiền hoàn sai thì tắt issue_refund. Có lỗi ghi oan hoặc lộ dữ liệu thì tắt file_carrier_fault hoặc notify_carrier tương ứng."],
+    "alert_channel": "Trực CSKH/Ops pilot",
     "decision_note": false,
     "review_sampling_pct": 0
   },
   "legal": {
-    "pii_fields_blocked_to_third_party": [],
-    "carrier_fault_requires_recorded_cause": false
+    "pii_fields_blocked_to_third_party": ["recipient_contact", "customer_note"],
+    "carrier_fault_requires_recorded_cause": true
   }
 }
