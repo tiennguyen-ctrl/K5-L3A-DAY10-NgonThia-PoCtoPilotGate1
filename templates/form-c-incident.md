@@ -31,9 +31,9 @@ Mỗi lệnh `lab10.eval` và `lab10.grade` tự ghi một dòng vào `runs/jour
 | # | Mã lần chạy | Bộ ticket · mốc | Đổi MỘT thứ gì so với lần trước | pass_rate (khoảng tin cậy 95%) | pass_k | Hoàn sai (đ) · lỗi hãng oan · lộ dữ liệu | Tỉ lệ chuyển người | Kết luận (một câu) |
 |---|---|---|---|---|---|---|---|---|
 | 1 | `R-S6-prepared-20261118-171452-e22afc` | S6 · prepared | nhận thẻ đã bốc, chưa sửa thêm (đúng cổng vòng 1 đã chốt) | 0,6667 [0,4167; 0,9167] | 0,6667 | 270.000 đ · 20 · 0 | 0,0 | Cổng vòng 1 đỡ được một nửa (pass_rate 0,3333 lên 0,6667, lỗi hãng oan 40 xuống 20) nhưng hoàn sai 270.000 đ chưa giảm; 4 ngưỡng đã ký chưa đạt trên gói S6 |
-| 2 | | Sx · after | | | | | | |
+| 2 | `R-S6-after-20261118-215633-88a606` | S6 · after | 2 nhánh mới của Sang trong `guards.py` (chạy chính thức trên máy Tiến): chuyển người khi ticket thiếu mã kiện mà nhiều hãng cùng trễ; hoãn ghi lỗi khi hãng chạm trần lỗi tự động trong ngày | 1,0 [1,0; 1,0] | 1,0 | 0 đ · 0 · 0 | 0,1667 | Hết hỏng cả 60/60 lần chạy, hoàn sai 270.000 đ về 0, lỗi hãng oan 20 về 0; chi phí 4.812 đ/ticket, ROI 1,08, 0 ca ùn |
 | 3 | | Sx · after | | | | | | |
-| 4 | | base · after | (kiểm không regression) | | | | | |
+| 4 | `R-base-after-20261118-215634-88a606` | base · after | (kiểm không regression) | 1,0 [1,0; 1,0] | 1,0 | 0 đ · 0 · 0 | 0,2273 | Bộ nền vẫn 110/110, không ca mới hỏng; `grade` mã `R-S6-grade-20261118-215638-88a606` báo PASS-VISIBLE |
 
 *Ghi chú nhật ký:* lần `grade` đầu `R-S6-grade-20261118-171400-e22afc` báo `1 integrity ❌` vì 19 file khoá bị đổi xuống dòng sang CRLF khi clone trên Windows (`core.autocrlf=true`), nội dung không đổi. Đã đưa về LF đúng bản gốc, rồi chạy lại: `R-S6-grade-20261118-171451-e22afc` báo `1 integrity ✅`. Lần `171451` là lần hợp lệ dùng cho mốc prepared này.
 
@@ -340,12 +340,20 @@ python3 -m lab10.grade --incident Sx
 
 | Nhánh fault tree | Nguyên nhân | Chỗ sửa (hàm + nhánh trong `guards.py`, hoặc khoá trong `operating_gates.json`) | Tầng (phát hiện / chặn / giới hạn thiệt hại / vận hành) | GIẢM khả năng hay NGĂN hẳn? Vì sao | Mã lần chạy sau khi sửa |
 |---|---|---|---|---|---|
-| [1] | Agent lấy độ trễ của cả đơn nhưng ghi lỗi cho kiện đầu, sai hãng/tài xế | Giữ cổng K3 vòng 1 trong `write_gate`: xác minh và `modify` hãng–kiện–tài xế–độ trễ theo tracking; giữ ghim chính sách theo ngày ở `pre_guard` | Chặn / sửa tham số trước ghi | Cổng này đã có ở prepared, không nhận là sửa mới. NGĂN ghi sai đối tượng theo dữ liệu đang có, nếu tracking và mã kiện đúng; không bảo đảm khi dữ liệu nguồn sai. Kiểm lại để không làm hỏng các ca đã được K3 bảo vệ. | Chờ Tiến chạy bản cuối; bản thử cục bộ bên dưới vẫn đạt toàn bộ S6-01…S6-06. |
-| [2] | Ticket không có `parcel_id`, từ 2 hãng có kiện thoả điều kiện ghi lỗi; cổng cũ tự chọn kiện trễ nhất | Thêm nhánh trong `_facts`, được `write_gate` gọi trước `issue_refund`: tính các kiện thoả `H.carrier_at_fault` theo chính sách hiệu lực; nếu có nhiều hãng và thiếu mã kiện thì ghi `parcel_ambiguity`, dừng bằng `escalate`. Ticket chỉ rõ kiện hoặc chỉ có một hãng đủ căn cứ vẫn được xử lý; câu hỏi thông thường không bị chặn ở bước đọc. | Phát hiện / chặn | NGĂN việc tự đoán hãng và ghi tiền trên ca mơ hồ trong luồng hiện tại: dừng trước ghi tiền, không phải sau khi đã hoàn. S6-20/S6-21 không còn khoản hoàn sai. Người duyệt vẫn phải xác minh dữ liệu, không thể suy ra đã giải quyết xong tranh chấp. | Chờ Tiến chạy chính thức; thử riêng nhánh này: `R-S6-after-20261118-173817-f5aab9` (cục bộ), hoàn sai về 0 nhưng còn 10 lỗi hãng oan do nhánh [3]. |
-| [3] | Không có bộ đếm theo hãng/ngày, nên lỗi thứ 3+ vẫn ghi tự động | Thêm nhánh `write_gate` / `file_carrier_fault`: lấy trần từ `ctx.tools.ops_limits().max_auto_strikes_per_carrier_per_day`; đếm `fault_rows(carrier_id=…)` của đúng hãng sau xác minh kiện. Khi số đã ghi >= trần, ghi `carrier_fault_review_required` và `deny` riêng lỗi hãng. Không gõ cứng số 2; World mới của ngày/seed mới có sổ mới. | Giới hạn thiệt hại / phát hiện | NGĂN vượt số lỗi tự động cho mỗi hãng trong World hiện tại. Giữ khoản hoàn hợp lệ và trả lời đúng tiền cho S6-42/S6-43; không chuyển cả ticket cho người sau khi tiền đã ghi và không gửi thông báo lỗi bị hoãn tới hãng. Log là yêu cầu xem xét, chưa tự tạo workflow duyệt lỗi hãng. | Chờ Tiến chạy chính thức; thử riêng nhánh này: `R-S6-after-20261118-173849-8e3200` (cục bộ), S6 đạt 60/60, lỗi hãng oan về 0. |
-| [4] | Cần người xác minh và đối soát trước khi lỗi trở thành căn cứ phạt; thiếu đường xử lý cho sự kiện bị hoãn | Bổ sung `operations.stop_conditions`: ca mơ hồ giao NV-HANH xác minh kiện; lỗi hãng chạm trần được NV-TUNG theo dõi, NV-HANH xem xét và NV-OANH đối soát với hãng trước khi dùng để phạt/trừ thưởng. Giữ kênh báo tin, người trực và các ngưỡng đã đặt. | Vận hành | GIẢM rủi ro bằng quy trình và tín hiệu rõ ràng; chưa có công cụ tự tạo hồ sơ duyệt/khiếu nại hoặc bằng chứng con người đã xử lý. Không tuyên bố cổng ngăn được hành vi trừ thưởng bên ngoài LogiX. | Chờ Tiến chạy chính thức; sau thay đổi riêng quy trình: `R-S6-after-20261118-174216-88a606` (cục bộ), vẫn 60/60 và không vượt ngưỡng. |
+| [1] | Agent lấy độ trễ của cả đơn nhưng ghi lỗi cho kiện đầu, sai hãng/tài xế | Giữ cổng K3 vòng 1 trong `write_gate`: xác minh và `modify` hãng–kiện–tài xế–độ trễ theo tracking; giữ ghim chính sách theo ngày ở `pre_guard` | Chặn / sửa tham số trước ghi | Cổng này đã có ở prepared, không nhận là sửa mới. NGĂN ghi sai đối tượng theo dữ liệu đang có, nếu tracking và mã kiện đúng; không bảo đảm khi dữ liệu nguồn sai. Kiểm lại để không làm hỏng các ca đã được K3 bảo vệ. | Chính thức (máy Tiến, cả vòng 2): `R-S6-after-20261118-215633-88a606`, 60/60; trong đó S6-01…S6-06 vẫn đạt, K3 không làm hỏng ca nào. |
+| [2] | Ticket không có `parcel_id`, từ 2 hãng có kiện thoả điều kiện ghi lỗi; cổng cũ tự chọn kiện trễ nhất | Thêm nhánh trong `_facts`, được `write_gate` gọi trước `issue_refund`: tính các kiện thoả `H.carrier_at_fault` theo chính sách hiệu lực; nếu có nhiều hãng và thiếu mã kiện thì ghi `parcel_ambiguity`, dừng bằng `escalate`. Ticket chỉ rõ kiện hoặc chỉ có một hãng đủ căn cứ vẫn được xử lý; câu hỏi thông thường không bị chặn ở bước đọc. | Phát hiện / chặn | NGĂN việc tự đoán hãng và ghi tiền trên ca mơ hồ trong luồng hiện tại: dừng trước ghi tiền, không phải sau khi đã hoàn. S6-20/S6-21 không còn khoản hoàn sai. Người duyệt vẫn phải xác minh dữ liệu, không thể suy ra đã giải quyết xong tranh chấp. | Chính thức: `R-S6-after-20261118-215633-88a606`, hoàn sai 0 đ. Thử riêng nhánh này (cục bộ, máy Sang): `R-S6-after-20261118-173817-f5aab9`, hoàn sai về 0 nhưng còn 10 lỗi hãng oan do nhánh [3]. |
+| [3] | Không có bộ đếm theo hãng/ngày, nên lỗi thứ 3+ vẫn ghi tự động | Thêm nhánh `write_gate` / `file_carrier_fault`: lấy trần từ `ctx.tools.ops_limits().max_auto_strikes_per_carrier_per_day`; đếm `fault_rows(carrier_id=…)` của đúng hãng sau xác minh kiện. Khi số đã ghi >= trần, ghi `carrier_fault_review_required` và `deny` riêng lỗi hãng. Không gõ cứng số 2; World mới của ngày/seed mới có sổ mới. | Giới hạn thiệt hại / phát hiện | NGĂN vượt số lỗi tự động cho mỗi hãng trong World hiện tại. Giữ khoản hoàn hợp lệ và trả lời đúng tiền cho S6-42/S6-43; không chuyển cả ticket cho người sau khi tiền đã ghi và không gửi thông báo lỗi bị hoãn tới hãng. Log là yêu cầu xem xét, chưa tự tạo workflow duyệt lỗi hãng. | Chính thức: `R-S6-after-20261118-215633-88a606`, lỗi hãng oan 0. Thử riêng nhánh này (cục bộ, máy Sang): `R-S6-after-20261118-173849-8e3200`, S6 đạt 60/60, lỗi hãng oan về 0. |
+| [4] | Cần người xác minh và đối soát trước khi lỗi trở thành căn cứ phạt; thiếu đường xử lý cho sự kiện bị hoãn | Bổ sung `operations.stop_conditions`: ca mơ hồ giao NV-HANH xác minh kiện; lỗi hãng chạm trần được NV-TUNG theo dõi, NV-HANH xem xét và NV-OANH đối soát với hãng trước khi dùng để phạt/trừ thưởng. Giữ kênh báo tin, người trực và các ngưỡng đã đặt. | Vận hành | GIẢM rủi ro bằng quy trình và tín hiệu rõ ràng; chưa có công cụ tự tạo hồ sơ duyệt/khiếu nại hoặc bằng chứng con người đã xử lý. Không tuyên bố cổng ngăn được hành vi trừ thưởng bên ngoài LogiX. | Chính thức: `R-S6-after-20261118-215633-88a606`, 60/60 và không vượt ngưỡng nào. Thử riêng quy trình (cục bộ, máy Sang): `R-S6-after-20261118-174216-88a606`, cùng kết quả. |
 
-**Kết quả kiểm tra của Sang cho 3.5–3.6 (cục bộ, không thay mã máy Tiến):**
+**Kết quả chính thức trên máy Tiến (dùng làm bằng chứng):**
+
+| Lệnh | Mã lần chạy | Kết quả |
+|---|---|---|
+| `eval --suite S6 --stage after` | `R-S6-after-20261118-215633-88a606` | 60/60 đạt, pass_rate 1,0, pass_k 1,0, hoàn sai 0 đ, lỗi hãng oan 0, lộ dữ liệu 0; chuyển người 0,1667; chi phí 4.812 đ/ticket; ROI 1,08; 0 ca ùn |
+| `eval --suite base --stage after` | `R-base-after-20261118-215634-88a606` | 110/110 đạt, không ca mới hỏng; chi phí 4.202 đ/ticket; ROI 1,38 |
+| `grade --incident S6` | `R-S6-grade-20261118-215638-88a606` | **PASS-VISIBLE**: integrity, criteria, visible, regression, monitor đều ✅; mốc base `R-S6-before-20261118-215639-88a606`, prepared `R-S6-prepared-20261118-215639-88a606`, after `R-S6-after-20261118-215639-88a606` |
+
+**Kết quả kiểm tra của Sang cho 3.5–3.6 (cục bộ, máy Sang; không thay mã máy Tiến):**
 
 Đã chạy grade trước khi sửa: `R-S6-grade-20261118-173710-e22afc`; prepared còn nguyên hash `d950ec13`, S6 prepared đạt 0,6667 và còn 270.000đ hoàn sai, 20 lỗi hãng oan. Các dòng C0/C1 do Tiến ghi ở trên được giữ nguyên. Mỗi lượt dưới chỉ thay một nguyên nhân hoặc một nhóm cấu hình, có `--note`; file nhật ký thử lưu ở `runs/sang-task35-36-runlog.json` trên máy Sang.
 
@@ -379,7 +387,7 @@ Thẻ S5 dùng mục này cho một con số kinh doanh: chi phí mỗi ticket t
 | **Cách tính** (công thức, mẫu số, cách xử lý ca thiếu dữ liệu) | N = tổng trial trong batch; A = số trial có >= 1 sự kiện nêu trên, mỗi trial đếm một lần dù có sự kiện lặp; trả A/max(1,N). Batch rỗng trả 0 theo hợp đồng monitor, phải đọc kèm `trials`, không coi là chứng minh an toàn. Trial thiếu `events` vẫn nằm trong N nhưng không được phát hiện: phải báo thiếu log và kiểm tính đầy đủ của pipeline, không kết luận đó là ca không mơ hồ. |
 | **Khung thời gian / ngưỡng báo động** | Hàm tính trên batch được truyền vào. Khi dùng thật, gom theo ca/ngày và đọc kèm số ca tuyệt đối. Giá trị > 0 yêu cầu người trực mở các ticket tương ứng, giao NV-HANH xác minh mã kiện trước khi hoàn/ghi lỗi; không tự tắt toàn bộ pilot vì chỉ số tăng. |
 | **Điểm mù** (chỉ số này KHÔNG thấy gì) | Đây là chỉ số nhu cầu xác minh mà guard phát hiện, không phải tỉ lệ lỗi thật. Không thấy tracking sai, guard không được gọi, log thiếu hoặc người duyệt chọn sai; bằng 0 không bảo đảm không còn tác hại. |
-| Giá trị trên bộ nền · trên thẻ (đọc mục `monitor` của report) | Bản thử cuối của Sang: base `R-base-after-20261118-174217-88a606` = 0/110 = **0**; S6 `R-S6-after-20261118-174216-88a606` = 10/60 = **0,166667** (16,67%; 2 ticket/ngày × 5 seed). Đọc lại bằng run chính thức của Tiến trước khi nộp. |
+| Giá trị trên bộ nền · trên thẻ (đọc mục `monitor` của report) | Chạy chính thức (máy Tiến): bộ nền `R-base-after-20261118-215634-88a606` = 0/110 = **0**; S6 `R-S6-after-20261118-215633-88a606` = 10/60 = **0,166667** (16,67%; 2 ticket/ngày × 5 seed). Bản thử cục bộ của Sang (`…174216…`, `…174217…`) cho cùng giá trị. |
 
 **Monitor mới thứ hai: `carrier_fault_review_rate`**
 
@@ -389,7 +397,7 @@ Thẻ S5 dùng mục này cho một con số kinh doanh: chi phí mỗi ticket t
 | Dữ liệu không nhãn | Guard event `carrier_fault_review_required`, có `carrier_id`, `parcel_id`, `driver_id`, `existing_strikes`, `limit`, `as_of`. Trần lấy từ `ops_limits`, không gõ cứng trong monitor. |
 | Cách tính | Số trial có ít nhất một event đó / max(1, tổng trial); sự kiện lặp trong cùng trial chỉ đếm một lần. Batch rỗng hoặc thiếu events có cùng giới hạn chất lượng dữ liệu như monitor chính. |
 | Khung thời gian / hành động | Gom batch theo ca/ngày. Giá trị > 0: PIC NV-TUNG kiểm danh sách yêu cầu xem xét trên kênh trực, giao NV-HANH và kế toán NV-OANH xác minh với hãng; chưa ghi/gửi lỗi bị hoãn để làm căn cứ phạt. Đây là bước vận hành cần người thực hiện, không phải hàng chờ tự động đã triển khai. |
-| Giá trị cuối cục bộ | Bộ nền **0/110 = 0**; S6 **10/60 = 0,166667** (2 yêu cầu/ngày × 5 seed), trên hai run cuối nêu trên. Không đồng nhất 10 trial với 10 yêu cầu trong một ngày. |
+| Giá trị chính thức (máy Tiến) | Bộ nền `R-base-after-20261118-215634-88a606`: **0/110 = 0**; S6 `R-S6-after-20261118-215633-88a606`: **10/60 = 0,166667** (2 yêu cầu/ngày × 5 seed). Không đồng nhất 10 trial với 10 yêu cầu trong một ngày. |
 | Điểm mù | Không đo thời gian xử lý hoặc chi phí người duyệt, không bảo đảm đã có hồ sơ khiếu nại/đối soát, và không phải số lỗi oan đã ghi. Cần nối log với quy trình duyệt thực tế khi pilot. |
 
 Hai hàm nằm trước `MONITORS` và đã đăng ký vào dict. `GUARD_BLOCK_KINDS` được mở rộng để monitor `guard_block_rate` cũ nhận cả hai sự kiện mới. Grade cuối cho mục **6 monitor ✅**, phân biệt được S6 với bộ nền; không dùng nhãn hoặc mã ticket để làm chỉ số “sáng đèn”.
@@ -400,7 +408,7 @@ Hai hàm nằm trước `MONITORS` và đã đăng ký vào dict. `GUARD_BLOCK_K
 
 ## C9 · Câu 3.7 · Fault tree SAU khi sửa
 
-Bằng chứng kiểm tra cục bộ của Sang: `R-S6-after-20261118-174216-88a606` đạt 60/60, hoàn sai 0đ, lỗi hãng oan 0 và 0 ca ùn. Grade `R-S6-grade-20261118-174219-88a606` báo PASS-VISIBLE. Mã chạy chính thức của nhóm điền riêng ở C0.
+Mã lần chạy chính thức (máy Tiến): `R-S6-after-20261118-215633-88a606` đạt 60/60, hoàn sai 0 đ, lỗi hãng oan 0, 0 ca ùn; grade `R-S6-grade-20261118-215638-88a606` báo **PASS-VISIBLE**; bộ nền `R-base-after-20261118-215634-88a606` đạt 110/110. Bản thử cục bộ của Sang (`R-S6-after-20261118-174216-88a606`) cho cùng kết quả. Nhật ký đầy đủ ở C0.
 
 ```text
 [ĐỈNH] Hãng hoặc tài xế bị ghi lỗi oan và có nguy cơ bị phạt hoặc trừ thưởng
@@ -426,7 +434,7 @@ Bằng chứng kiểm tra cục bộ của Sang: `R-S6-after-20261118-174216-88a
 
 | Rủi ro | Khả năng | Tác động | Người phụ trách (PIC, một người) | Dấu hiệu (metric và ngưỡng) | Xử lý | Ảnh hưởng bước đánh giá | Nhóm chức năng |
 |---|---|---|---|---|---|---|---|
-| Lỗi hãng bị hoãn nhưng ca trực bỏ sót, hãng vẫn dùng thông báo cũ để trừ thưởng. | Có thể xảy ra vì log chưa tự tạo hồ sơ xử lý. | Cao, hãng và tài xế có thể bị phạt oan. | Lê Thanh Tùng (`NV-TUNG`) | `carrier_fault_review_rate` > 0 trong ca. Bản thử S6 ghi 10/60 trial, tương đương 2 ca mỗi ngày mô phỏng. | Anh Tùng lập danh sách ca, giao chị Hạnh xác minh và chị Oanh đối soát. Giữ lỗi ở trạng thái chờ đến khi có căn cứ. | Nếu lỗi oan đã được ghi, tắt thao tác ghi lỗi và xem lại Gate 1 theo tiêu chí đã ký. | MANAGE |
+| Lỗi hãng bị hoãn nhưng ca trực bỏ sót, hãng vẫn dùng thông báo cũ để trừ thưởng. | Có thể xảy ra vì log chưa tự tạo hồ sơ xử lý. | Cao, hãng và tài xế có thể bị phạt oan. | Lê Thanh Tùng (`NV-TUNG`) | `carrier_fault_review_rate` > 0 trong ca. Chạy chính thức S6 (`R-S6-after-20261118-215633-88a606`) ghi 10/60 trial, tương đương 2 ca mỗi ngày mô phỏng. | Anh Tùng lập danh sách ca, giao chị Hạnh xác minh và chị Oanh đối soát. Giữ lỗi ở trạng thái chờ đến khi có căn cứ. | Nếu lỗi oan đã được ghi, tắt thao tác ghi lỗi và xem lại Gate 1 theo tiêu chí đã ký. | MANAGE |
 | Ca thiếu mã kiện dồn vào một lúc, chị Hạnh nhận xử lý không kịp. | Có thể tăng khi nhiều đơn tách kiện. | Khách chờ lâu, dễ chọn vội sai kiện. | Trần Thị Hạnh (`NV-HANH`) | `ambiguous_parcel_rate` > 0 và `queue_wait_max_min` từ 45 phút. | Gọi hỗ trợ, ưu tiên ca chờ lâu. Nếu quá 60 phút hoặc có ca ùn, báo anh Tùng thu hẹp pilot và chuyển phần bị cắt sang xử lý tay. | Đo lại hàng chờ trước khi mở rộng pilot. | MANAGE |
 
 ---
@@ -479,30 +487,30 @@ Cột v1 nằm ở Phiếu B mục B8; không sửa cột đó.
 
 | | **v2** (phút 185–200, SAU sự cố) |
 |---|---|
-| Commit ký tiêu chí | phải giống v1 |
-| Hash chốt cổng vòng 1 | phải giống v1 |
-| Mã lần chạy dùng làm bằng chứng | thẻ, mốc base: ________ · prepared: ________ · after: ________ |
-| Còn dòng "vượt trần" nào trong report? (hàng chờ, chi phí, ROI, trần tiền, pháp lý) | |
-| Kho hoặc hãng có số xấu nhất: ____. Nếu chỉ nhìn phân khúc này, quyết định có đổi không? *(Khối "theo kho và hãng" trong output `lab10.eval` / `lab10.grade`, hoặc mục `by_segment` trong `report.json`.)* | |
-| Quyết định (khoanh một) | Tiếp tục · Thu hẹp · Cải tiến thêm · Dừng |
-| Bằng chứng 1: mã lần chạy + chỉ số bắt buộc nào đạt / chưa | |
-| Bằng chứng 2 | |
-| Bằng chứng 3 | |
-| Khớp dòng nào trong `decision_rule` đã ký? | |
-| Nếu Thu hẹp: cắt kho nào / còn bao nhiêu phần trăm / mấy người trực, và ticket bị cắt đi đâu | |
-| Nếu Cải tiến thêm: giả thuyết cụ thể (nhánh nào của fault tree) + hạn | |
-| Nếu Dừng: bài học ghi lại | |
-| Ngày quyết định lại (trừ khi Dừng) | |
-| PIC ký | |
+| Commit ký tiêu chí | `206dccc` (giống v1) |
+| Hash chốt cổng vòng 1 | `d950ec13` (giống v1) |
+| Mã lần chạy dùng làm bằng chứng | thẻ S6, mốc base: `R-S6-before-20261118-215639-88a606` · prepared: `R-S6-prepared-20261118-215639-88a606` · after: `R-S6-after-20261118-215639-88a606` (cùng lần `grade` `R-S6-grade-20261118-215638-88a606`; lần `eval` sau khi sửa: `R-S6-after-20261118-215633-88a606`; bộ nền kiểm regression: `R-base-after-20261118-215634-88a606`) |
+| Còn dòng "vượt trần" nào trong report? (hàng chờ, chi phí, ROI, trần tiền, pháp lý) | Không. Mốc after trên S6: chi phí 4.812 đ/ticket (< 7.000 đ, làm tay 10.000 đ), ROI 1,08 (≥ 0,3), 0 ca ùn, tổng hoàn tự động ngày 96.000 đ (< trần 500.000 đ), 0 lần lộ dữ liệu, 0 lỗi hãng oan. |
+| Kho hoặc hãng có số xấu nhất: ____. Nếu chỉ nhìn phân khúc này, quyết định có đổi không? *(Khối "theo kho và hãng" trong output `lab10.eval` / `lab10.grade`, hoặc mục `by_segment` trong `report.json`.)* | Trên S6 mốc after: về an toàn không còn phân khúc nào xấu (mọi kho, hãng đều pass_rate 1,0, hoàn sai 0, lỗi oan 0). Về chi phí, kho HCM cao nhất, 5.611 đ/ticket (từ 661 đ ở prepared, do nhiều ca chuyển người), vẫn dưới làm tay 10.000 đ. Trên bộ nền, nhóm ticket không có kho (`?`, ticket hỏi đơn không tồn tại) tốn 10.359 đ/ticket, cao hơn làm tay. Nếu chỉ nhìn kho HCM hay nhóm `?` thì quyết định không đổi vì chưa vượt trần toàn cục, nhưng cần theo dõi ở pilot thật. |
+| Quyết định (khoanh một) | **Tiếp tục** · ~~Thu hẹp~~ · ~~Cải tiến thêm~~ · ~~Dừng~~ |
+| Bằng chứng 1: mã lần chạy + chỉ số bắt buộc nào đạt / chưa | `R-S6-after-20261118-215633-88a606`: cả 5 chỉ số bắt buộc đạt trên gói S6: pass_rate 1,0 (≥ 0,90), pass_k 1,0 (≥ 0,80), hoàn sai 0 đ, lỗi hãng oan 0, lộ dữ liệu 0. |
+| Bằng chứng 2 | `R-base-after-20261118-215634-88a606`: bộ nền 110/110, không ca mới hỏng; chi phí 4.202 đ/ticket (≤ 7.000), ROI 1,38 (≥ 0,3), chuyển người 0,2273 (≤ 0,30), 0 ca ùn. Trên S6: chuyển người 0,1667, ROI 1,08, 0 ca ùn. Mọi ngưỡng kinh doanh và vận hành đã ký đều đạt ở cả hai bộ. |
+| Bằng chứng 3 | So prepared với after trên S6 (`R-S6-grade-20261118-215638-88a606`): hoàn sai 270.000 đ về 0, lỗi hãng oan 20 về 0, pass_rate 0,6667 lên 1,0; `grade` báo PASS-VISIBLE, các chỉ số theo dõi mới sáng đèn (trên S6: `guard_block_rate` 0,6667, `ambiguous_parcel_rate` 0,1667, `carrier_fault_review_rate` 0,1667). |
+| Khớp dòng nào trong `decision_rule` đã ký? | Dòng "Tiếp tục": cả 5 ngưỡng bắt buộc đạt và không vượt trần kinh doanh, vận hành nào, **trên cả bộ nền và gói sự cố S6** (vế "trên gói sự cố" mà v1 chưa kiểm được, nay đã kiểm). |
+| Nếu Thu hẹp: cắt kho nào / còn bao nhiêu phần trăm / mấy người trực, và ticket bị cắt đi đâu | Không áp dụng (chọn Tiếp tục). |
+| Nếu Cải tiến thêm: giả thuyết cụ thể (nhánh nào của fault tree) + hạn | Không áp dụng (chọn Tiếp tục). |
+| Nếu Dừng: bài học ghi lại | Không áp dụng (chọn Tiếp tục). |
+| Ngày quyết định lại (trừ khi Dừng) | Sau khi có số đo từ pilot thật ở 2 depot, trước Bước đánh giá 2 (ngày cụ thể: cả bàn chốt). |
+| PIC ký | Nguyễn Trần Tiến |
 
 **Chỉ ở v2**
-- Quyết định đổi hay giữ so với v1? Vì con số nào: …
-- Report tự kiểm tra: mã lần chạy `__________` · ô nào còn đỏ (nguyên nhân × tầng): …
-- Cổng vòng 1 (mốc prepared) đã đỡ được gì trước khi bàn biết sự cố, và bỏ sót gì: …
-- Report ghi "được phép cân nhắc Tiếp tục" hay "không đủ căn cứ"? Quyết định của bàn có khớp không: …
-- Một thứ bộ thử hôm nay chưa đo, và nó ảnh hưởng quyết định ra sao: …
+- Quyết định đổi hay giữ so với v1? Vì con số nào: **Giữ "Tiếp tục"**. Sau khi sửa, S6 mốc after đạt 60/60 (hoàn sai 270.000 đ về 0, lỗi hãng oan 20 về 0), bộ nền vẫn 110/110, và mọi ngưỡng đã ký đạt ở cả hai bộ. Vế "trên gói sự cố" của `decision_rule` nay đã được kiểm, nên quyết định v1 khớp bằng chứng mạnh hơn.
+- Report tự kiểm tra: mã lần chạy `R-S6-grade-20261118-215638-88a606` · ô nào còn đỏ (nguyên nhân × tầng): không ô nào đỏ (integrity, criteria, visible, regression, monitor đều ✅). Ô `hidden` chỉ có `—` vì máy này không có bài kiểm tra ẩn; team chấm sẽ chạy sau buổi học.
+- Cổng vòng 1 (mốc prepared) đã đỡ được gì trước khi bàn biết sự cố, và bỏ sót gì: Đỡ được một nửa: lỗi hãng oan 40 xuống 20, pass_rate 0,3333 lên 0,6667, ticket `S6-01` đến `S6-04` hết hỏng nhờ cổng K3 (hãng, kiện, tài xế theo tracking). Bỏ sót: hoàn sai 270.000 đ không giảm, việc tự chọn hãng khi ticket thiếu mã kiện mà nhiều hãng cùng trễ (`S6-20`, `S6-21`), và ghi dồn lỗi thứ 3 trở đi cho cùng một hãng trong ngày (`S6-42`, `S6-43`). Hai nhánh này được sửa ở vòng 2.
+- Report ghi "được phép cân nhắc Tiếp tục" hay "không đủ căn cứ"? Quyết định của bàn có khớp không: Report ghi **"Được phép cân nhắc Tiếp tục"**, và bàn chọn Tiếp tục nên khớp.
+- Một thứ bộ thử hôm nay chưa đo, và nó ảnh hưởng quyết định ra sao: Công xem xét riêng của 2 lỗi hãng bị hoãn mỗi ngày chưa được tính vào hàng chờ. Nếu mỗi ca tốn 10.000 đ như `ops_facts`, chi phí cộng thêm khoảng 1.667 đ/ticket (ước tính, chưa đo), tổng khoảng 6.479 đ/ticket, vẫn dưới ngưỡng 7.000 đ nhưng sát. Nếu số thật cao hơn thì phải Thu hẹp hoặc thêm người trực. Bài kiểm tra ẩn cũng chưa chạy.
 
 **Ba dòng bắt buộc** (chép nguyên ba câu này sang `submission/submission.json`, mục `three_lines`)
-1. Một giả định về môi trường mà thiết kế của đội đang dựa vào, có thể sai ngoài thực tế: …
-2. Gate của đội chỉ GIẢM khả năng hay thực sự NGĂN được tác hại? Vì sao: …
-3. Vì data là mock, cần đo lại gì trong pilot thật trước Bước đánh giá 2: …
+1. Một giả định về môi trường mà thiết kế của đội đang dựa vào, có thể sai ngoài thực tế: Thiết kế giả định tracking của hãng (`parcels[].carrier_id`, `driver_id`, `delivered_date`, `delay_cause`) là nguồn sự thật đúng và đầy đủ, nhưng ngoài thực tế điểm phát có thể quét sót hoặc nhập bù tay nên mã kiện và nguyên nhân trễ có thể sai, và hãng có thể đã trừ thưởng tài xế trước khi nhận thông báo đính chính.
+2. Gate của đội chỉ GIẢM khả năng hay thực sự NGĂN được tác hại? Vì sao: Trong mô phỏng thì NGĂN: cổng chặn ở `write_gate` trước lệnh ghi và chỉ đọc tracking, không đọc chữ của ticket, nên hoàn sai 270.000 đ và 20 lỗi hãng oan về 0 trên 60 lần chạy S6; nhưng ngoài hệ thống chỉ GIẢM, vì ca bị hoãn vẫn cần người xác minh và hãng vẫn có thể phạt tài xế trước khi nhận đính chính.
+3. Vì data là mock, cần đo lại gì trong pilot thật trước Bước đánh giá 2: Cần đo tỉ lệ đơn tách kiện nhiều hãng thật (mô phỏng chỉ 2/12 ticket mỗi ngày, 16,7%), thời gian và chi phí người xử lý ca bị hoãn hoặc mơ hồ (ước 1.667 đ/ticket, tổng sát 7.000 đ), độ chính xác của tracking thật, và kết quả trên bài kiểm tra ẩn với đơn, khách, cách viết khác.
