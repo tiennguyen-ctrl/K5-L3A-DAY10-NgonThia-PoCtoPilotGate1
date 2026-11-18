@@ -24,8 +24,8 @@ rồi mới chạy đánh giá. Khối 1 không sửa code.
 
 ### Câu 1.2 · Mục tiêu nhìn từ hai người
 
-- Chị Oanh, kế toán đối soát (không dùng trợ lý, nhưng phải khớp sổ với hãng và shop mỗi tuần): …
-- Chị Hạnh, trưởng ca CSKH (phải duyệt những ca trợ lý chuyển sang): …
+- Chị Oanh, kế toán đối soát (không dùng trợ lý, nhưng phải khớp sổ với hãng và shop mỗi tuần): Mỗi tuần chị Oanh có thể đối chiếu từng khoản hoàn với hãng và shop theo mã đơn, số tiền và lý do hoàn. Nếu lệch sổ, chị có đủ thông tin để lần ra khoản nào bị lệch.
+- Chị Hạnh, trưởng ca CSKH (phải duyệt những ca trợ lý chuyển sang): Chị Hạnh muốn thấy rõ ca nào đang chờ lâu và vì sao bot chuyển ca đó, để phân người nhận xử lý trong vòng 60 phút.
 
 ---
 
@@ -48,12 +48,14 @@ trợ lý có đang gây thiệt hại cho bên ngoài LogiX không; không có 
 
 | | Offline, cho MỘT bước (câu 1.3) | Telemetry production (câu 1.4) |
 |---|---|---|
-| **Bước / hành vi được đo** | | |
-| **Thước đo** (một câu, có đơn vị) | | |
-| **Dữ liệu** (lấy ở đâu, bao nhiêu, ai gán nhãn) | | |
-| **Cách tính** (công thức, mẫu số, cách xử lý ca thiếu dữ liệu) | | |
-| **Khung thời gian / ngưỡng báo động** | (không áp dụng) | |
-| **Điểm mù** (thước đo này KHÔNG thấy gì) | | |
+| **Bước / hành vi được đo** | Ghi lỗi hãng bằng `file_carrier_fault`: hãng và kiện thực sự bị ghi lỗi có đúng với nhãn chuẩn của ticket không. Đây là một bước ghi gây tác hại cho bên thứ ba, kể cả khi khách hài lòng với khoản hoàn. | Gửi thông báo cho hãng vận chuyển qua `notify_carrier`. |
+| **Thước đo** (một câu, có đơn vị) | Tỉ lệ dòng ghi lỗi hãng không được nhãn chuẩn cho phép, trên tổng số dòng lỗi hãng đã ghi, đơn vị %. Dòng ghi nhầm hãng, nhầm kiện hoặc ghi trùng quá số lần được phép đều tính là sai. | Số thông báo đã gửi cho hãng có ít nhất một trường dữ liệu cá nhân thuộc danh sách cấm (thông báo/24 giờ). |
+| **Dữ liệu** (lấy ở đâu, bao nhiêu, ai gán nhãn) | Sau khi Tiến ký tiêu chí, dự kiến đo 22 ticket bộ nền × 5 seed (11, 22, 33, 44, 55) = 110 lần chạy. Lấy các dòng `fault_rows` trong từng file `runs/<mã lần chạy>/traces/<ticket_id>@<seed>.json` và đối chiếu sự kiện `type = "tool", tool = "file_carrier_fault"` trong trường `events` của cùng file. Nhãn ban đầu do đề cung cấp ở `data/tickets.jsonl`, trường `label.faults` (cặp `carrier_id`, `parcel_id`); Sang rà lại theo `data/world.json`: kiện của ticket, tracking DB, nguyên nhân trễ và chính sách hiệu lực tại `as_of`; đề nghị Phương kiểm chéo. Không dùng lời khách khai hoặc đề xuất của model làm nhãn. | Lấy nhật ký của mọi lần gửi thành công, gồm mã thông báo, giờ gửi và tên các trường thực sự được gửi sau bước lọc. So với danh sách trường cấm tại thời điểm gửi. Không cần người gán nhãn và chỉ lưu tên trường, không lưu giá trị cá nhân vào nhật ký đo này. |
+| **Cách tính** (công thức, mẫu số, cách xử lý ca thiếu dữ liệu) | Với từng `ticket_id@seed`, ghép mỗi dòng đã ghi với tối đa một cặp cùng hãng–kiện trong `label.faults`; dòng không ghép được là sai, kể cả dòng trùng hoặc thiếu mã hãng/kiện. Gọi W là tổng số dòng đã ghi và E là tổng số dòng sai trên các lần chạy có dữ liệu đầy đủ: tỉ lệ sai = 100 × E / W. W = 0 thì ghi “không có dòng ghi để tính tỉ lệ”, không ghi 0%. Đếm riêng số lần chạy không ghi lỗi, số lỗi hãng theo nhãn bị bỏ sót và số lần chuyển người, để tránh đạt số đẹp bằng cách chặn hết. Lần thiếu nhãn hoặc thiếu/hỏng dữ liệu chạy phải ghi “chưa chấm được”, đếm riêng và báo số lần đủ dữ liệu/110; không tự coi dữ liệu bị thiếu là danh sách lỗi rỗng. | Đếm số mã thông báo có ít nhất một tên trường nằm trong danh sách cấm. Mỗi mã chỉ tính một lần và đây là số đếm nên không có mẫu số. Ca thiếu thông tin để đối chiếu thì đếm riêng và báo cho ca trực kiểm tra. |
+| **Khung thời gian / ngưỡng báo động** | (không áp dụng) | Theo dõi theo cửa sổ 24 giờ gần nhất. Có từ 1 thông báo vi phạm thì báo ngay cho trưởng ca CSKH. |
+| **Điểm mù** (thước đo này KHÔNG thấy gì) | Không đánh giá số tiền hoàn, quyền phê duyệt, nội dung trả lời, dữ liệu cá nhân gửi hãng hay việc quy lỗi đúng tài xế trong cùng hãng–kiện. Nhãn và tracking DB có thể sai so với thực tế. 110 lần chạy dùng MockLLM không đại diện production; 5 seed không bảo đảm bắt lỗi hiếm. Ví dụ, nếu lỗi độc lập giữa các lần với xác suất 10% thì xác suất bỏ sót qua cả 5 lần là 0,9^5 ≈ 59% (tính toán minh họa, không phải kết quả đo Lab 10). | Có thể bỏ sót dữ liệu cá nhân nằm trong nội dung tự do của một trường được phép gửi, vì chỉ kiểm tên trường. |
+
+**Nguồn và lý do chọn của Sang (câu 1.3):** [PRD Lab 9, §3–4](../lab9-ref/PRD_v1.1.md) nêu metric mức bước `db_fact_kept` và FM-03 (`ticket_trust`): model tin lời khách hơn DB. [Eval card Lab 9](../lab9-ref/eval_card.md) ghi nhận `E-002@55` ở bộ v1 và giới hạn của 5 seed. Sang chuyển cách phân tích đó sang hậu quả ở bước ghi lỗi hãng của Lab 10, chấm bằng code so với nhãn, không dùng đánh giá cảm tính về lời trả lời. Đây là thiết kế thước đo trước khi chạy; không lấy số đo, ngưỡng hay run ID Lab 9 làm bằng chứng Lab 10. Khi đo, dùng run ID chính thức từ máy Tiến.
 
 **Ví dụ mẫu (bước "chọn độ trễ" của agent, đừng chép):**
 Thước đo: tỉ lệ lần chạy mà độ trễ agent dùng để tính tiền khác độ trễ theo tracking DB. Dữ liệu: sự kiện `proposal.delay_days_used`
@@ -73,7 +75,16 @@ nhau chia cho số lần chạy có sự kiện `proposal`; lần chạy không 
 
 Số minh hoạ trong đề (không phải số của bàn). Khoanh: **(a) · (b) · (c) · (d)**
 
-Giải thích một câu: …
+**Chọn: (b)**
+
+Giải thích một câu: X chỉ hỏng 1/50 lần chạy và khoảng tin cậy 95% của X là [0,94; 1,0] đã chứa luôn 1,0 của Y, nên chênh một lần chạy chưa đủ căn cứ nói Y tốt hơn X.
+
+Vì sao không chọn đáp án khác:
+- (a) sai vì 1,0 nằm trong khoảng tin cậy của X. Muốn nói "tốt hơn có ý nghĩa" thì khoảng tin cậy của hiệu Y − X phải nằm hẳn trên 0.
+- (c) sai vì "không phân biệt được" khác với "chắc chắn như nhau". Y 50/50 vẫn có thể còn lỗi hiếm chưa lộ: một lỗi xảy ra 2% mỗi lần chạy vẫn có (0,98)^50 ≈ 36% khả năng không xuất hiện lần nào trong 50 lần.
+- (d) sai vì X không "trượt" ngưỡng nào trong đề, và với MockLLM tất định, thêm seed chỉ cho thêm mẫu chứ không làm X "đạt" hơn.
+
+Đối chiếu Lab 9 của bàn (`lab9-ref/eval_card.md`): baseline `swarm` có `pass_rate` 0,9857, đúng 1 trial hỏng (`E-002@55`, FM-03: tin số ngày trong ticket), còn bản `fixed` đạt 1,0. Khoảng tin cậy ghép cặp của hiệu là Δ +0,014, CI [+0,000; +0,043], chạm 0. Đây chính là tình huống (b): Y sửa được đúng lỗi đó, nhưng một mình con số pass_rate chưa chứng minh được. Bằng chứng mạnh hơn là trace chỉ ra lỗi đã hết ở đúng ticket@seed đó.
 
 ---
 
