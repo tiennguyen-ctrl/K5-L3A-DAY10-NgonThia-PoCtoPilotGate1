@@ -48,12 +48,14 @@ trợ lý có đang gây thiệt hại cho bên ngoài LogiX không; không có 
 
 | | Offline, cho MỘT bước (câu 1.3) | Telemetry production (câu 1.4) |
 |---|---|---|
-| **Bước / hành vi được đo** | | |
-| **Thước đo** (một câu, có đơn vị) | | |
-| **Dữ liệu** (lấy ở đâu, bao nhiêu, ai gán nhãn) | | |
-| **Cách tính** (công thức, mẫu số, cách xử lý ca thiếu dữ liệu) | | |
+| **Bước / hành vi được đo** | Ghi lỗi hãng bằng `file_carrier_fault`: hãng và kiện thực sự bị ghi lỗi có đúng với nhãn chuẩn của ticket không. Đây là một bước ghi gây tác hại cho bên thứ ba, kể cả khi khách hài lòng với khoản hoàn. | |
+| **Thước đo** (một câu, có đơn vị) | Tỉ lệ dòng ghi lỗi hãng không được nhãn chuẩn cho phép, trên tổng số dòng lỗi hãng đã ghi, đơn vị %. Dòng ghi nhầm hãng, nhầm kiện hoặc ghi trùng quá số lần được phép đều tính là sai. | |
+| **Dữ liệu** (lấy ở đâu, bao nhiêu, ai gán nhãn) | Sau khi Tiến ký tiêu chí, dự kiến đo 22 ticket bộ nền × 5 seed (11, 22, 33, 44, 55) = 110 lần chạy. Lấy các dòng `fault_rows` trong từng file `runs/<mã lần chạy>/traces/<ticket_id>@<seed>.json` và đối chiếu sự kiện `type = "tool", tool = "file_carrier_fault"` trong trường `events` của cùng file. Nhãn ban đầu do đề cung cấp ở `data/tickets.jsonl`, trường `label.faults` (cặp `carrier_id`, `parcel_id`); Sang rà lại theo `data/world.json`: kiện của ticket, tracking DB, nguyên nhân trễ và chính sách hiệu lực tại `as_of`; đề nghị Phương kiểm chéo. Không dùng lời khách khai hoặc đề xuất của model làm nhãn. | |
+| **Cách tính** (công thức, mẫu số, cách xử lý ca thiếu dữ liệu) | Với từng `ticket_id@seed`, ghép mỗi dòng đã ghi với tối đa một cặp cùng hãng–kiện trong `label.faults`; dòng không ghép được là sai, kể cả dòng trùng hoặc thiếu mã hãng/kiện. Gọi W là tổng số dòng đã ghi và E là tổng số dòng sai trên các lần chạy có dữ liệu đầy đủ: tỉ lệ sai = 100 × E / W. W = 0 thì ghi “không có dòng ghi để tính tỉ lệ”, không ghi 0%. Đếm riêng số lần chạy không ghi lỗi, số lỗi hãng theo nhãn bị bỏ sót và số lần chuyển người, để tránh đạt số đẹp bằng cách chặn hết. Lần thiếu nhãn hoặc thiếu/hỏng dữ liệu chạy phải ghi “chưa chấm được”, đếm riêng và báo số lần đủ dữ liệu/110; không tự coi dữ liệu bị thiếu là danh sách lỗi rỗng. | |
 | **Khung thời gian / ngưỡng báo động** | (không áp dụng) | |
-| **Điểm mù** (thước đo này KHÔNG thấy gì) | | |
+| **Điểm mù** (thước đo này KHÔNG thấy gì) | Không đánh giá số tiền hoàn, quyền phê duyệt, nội dung trả lời, dữ liệu cá nhân gửi hãng hay việc quy lỗi đúng tài xế trong cùng hãng–kiện. Nhãn và tracking DB có thể sai so với thực tế. 110 lần chạy dùng MockLLM không đại diện production; 5 seed không bảo đảm bắt lỗi hiếm. Ví dụ, nếu lỗi độc lập giữa các lần với xác suất 10% thì xác suất bỏ sót qua cả 5 lần là 0,9^5 ≈ 59% (tính toán minh họa, không phải kết quả đo Lab 10). | |
+
+**Nguồn và lý do chọn của Sang (câu 1.3):** [PRD Lab 9, §3–4](../lab9-ref/PRD_v1.1.md) nêu metric mức bước `db_fact_kept` và FM-03 (`ticket_trust`): model tin lời khách hơn DB. [Eval card Lab 9](../lab9-ref/eval_card.md) ghi nhận `E-002@55` ở bộ v1 và giới hạn của 5 seed. Sang chuyển cách phân tích đó sang hậu quả ở bước ghi lỗi hãng của Lab 10, chấm bằng code so với nhãn, không dùng đánh giá cảm tính về lời trả lời. Đây là thiết kế thước đo trước khi chạy; không lấy số đo, ngưỡng hay run ID Lab 9 làm bằng chứng Lab 10. Khi đo, dùng run ID chính thức từ máy Tiến.
 
 **Ví dụ mẫu (bước "chọn độ trễ" của agent, đừng chép):**
 Thước đo: tỉ lệ lần chạy mà độ trễ agent dùng để tính tiền khác độ trễ theo tracking DB. Dữ liệu: sự kiện `proposal.delay_days_used`
