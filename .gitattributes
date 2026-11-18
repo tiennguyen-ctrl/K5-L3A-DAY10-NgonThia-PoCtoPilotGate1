@@ -1,0 +1,10 @@
+/submission/** text eol=lf
+/config/acceptance_criteria.json text eol=lf
+/lab10/guards_round1.py text eol=crlf
+/submission/code/guards_round1.py text eol=crlf
+/config/operating_gates.round1.json text eol=crlf
+/submission/config/operating_gates.round1.json text eol=crlf
+/lab10/guards.py text eol=crlf
+/lab10/monitors.py text eol=crlf
+/config/switches.json text eol=crlf
+/config/operating_gates.json text eol=crlf
