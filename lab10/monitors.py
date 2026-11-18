@@ -19,7 +19,40 @@ def escalation_rate(trials):
     return sum(t["status"] == "escalated" for t in trials) / max(1, len(trials))
 
 
+def _has_event(trial, type_, kinds=None):
+    for e in trial.get("events") or []:
+        if e.get("type") == type_ and (kinds is None or e.get("kind") in kinds):
+            return True
+    return False
+
+
+def model_override_rate(trials):
+    """Kỹ thuật (Phương): tỉ lệ trial mà agent lấy số trong ticket đè lên số của tracking DB.
+
+    Dữ liệu: sự kiện `model_override` agent tự ghi vào trace; không cần nhãn.
+    Cách tính: số trial có ít nhất một `model_override` / tổng số trial (mỗi trial đếm một lần).
+    Tăng đột ngột = khách đang khai số khác DB nhiều hơn, hoặc DB đang thiếu/lệch.
+    """
+    return sum(_has_event(t, "model_override") for t in trials) / max(1, len(trials))
+
+
+GUARD_BLOCK_KINDS = ("refund_blocked", "carrier_fault_blocked", "carrier_fault_corrected",
+                     "daily_refund_cap_blocked", "source_check_failed", "policy_unavailable")
+
+
+def guard_block_rate(trials):
+    """Phát hiện (Phương): tỉ lệ trial mà cổng của bàn phải chặn, sửa hoặc từ chối một lệnh ghi.
+
+    Dữ liệu: sự kiện `type = "guard"` do lab10/guards.py ghi qua ctx.log (tên `kind` do Sang bàn giao).
+    Cách tính: số trial có ít nhất một sự kiện guard thuộc GUARD_BLOCK_KINDS / tổng số trial.
+    Bộ nền sạch thì gần 0; tăng nghĩa là agent đang đề xuất lệnh ghi sai nhiều hơn và cổng đang gánh.
+    """
+    return sum(_has_event(t, "guard", GUARD_BLOCK_KINDS) for t in trials) / max(1, len(trials))
+
+
 MONITORS = {
     "escalation_rate": escalation_rate,     # có sẵn; KHÔNG tính là metric mới của đội
+    "model_override_rate": model_override_rate,
+    "guard_block_rate": guard_block_rate,
 }
 STARTER_MONITORS = ("escalation_rate",)
