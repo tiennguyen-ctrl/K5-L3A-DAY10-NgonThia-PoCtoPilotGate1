@@ -455,7 +455,7 @@ Mã lần chạy chính thức (máy Tiến): `R-S6-after-20261118-215633-88a606
 | 6 · Chi phí | Xong | C7 ghi S6 cục bộ 4.812đ/ticket, ROI 1,08. Chi phí xử lý lỗi hãng ngoài mô phỏng cần đo khi pilot. | Nguyễn Trần Tiến |
 | 7 · Vận hành | Chưa | Đã có người phụ trách và cách xử lý ở Runbook 4–5. Cần thử bàn giao ca và lập danh sách từ log. | Nguyễn Vũ Hoàng |
 | 8 · Con người, pháp lý | Chưa | C9 ghi lỗi hãng oan về 0 trên bản thử. Cần xác nhận phía hãng có nhận đính chính và rà lại khoản phạt. | Nguyễn Vũ Hoàng |
-| 9 · Quyết định | Chưa | B8 đã có v1. C12 còn chờ nhóm chốt theo report chính thức. | Nguyễn Trần Tiến |
+| 9 · Quyết định | Xong | B8 chốt v1 và C12 chốt v2 đều là Tiếp tục. Report S6 chính thức ghi nhận các ngưỡng đã ký đều đạt và không vượt trần vận hành. | Nguyễn Trần Tiến |
 
 ### Runbook 4 · Sau sự cố S6
 
