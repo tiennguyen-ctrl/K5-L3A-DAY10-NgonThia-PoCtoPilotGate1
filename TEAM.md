@@ -64,19 +64,27 @@ Một điều học được, một điều còn chưa chắc.
 
 ### Phần việc phụ trách
 
-Kỹ sư cổng (phụ trách `lab10/guards.py`). Viết cổng `pre_guard`, `write_gate`, dò trace bảng soát lỗi, câu 1.3. Chi tiết xem [`chia-viec.md`](chia-viec.md).
+Nguyễn Ngọc Sang · MSSV `2A202603444` · Kỹ sư cổng. Phụ trách đo ở mức bước (A2, câu 1.3), dò trace và phân tích rủi ro vòng 1 (B2, B6), triển khai cổng (B7.1) và sửa cổng, bổ sung chỉ số theo dõi cho thẻ S6 (C7, C8).
 
 ### Đóng góp cụ thể
 
-...
+- Thiết kế thước đo offline cho bước `file_carrier_fault` dựa trên nhãn hãng–kiện, có cách tính cho dòng trùng và dữ liệu thiếu. Dò `T-002@55` và đối chiếu với FM-03 của Lab 9. Agent dùng 5 ngày khách khai thay cho 2 ngày trong tracking, dẫn đến hoàn sai 20.000đ và ghi oan một lỗi cho VNX. Ghi phân tích vào B2 và chuẩn bị dự thảo B6 để nhóm chọn cổng vòng 1.
+- Triển khai ba cổng đã chọn ở B6. K1 kiểm quyền lợi hoàn từ tracking và chính sách hiệu lực, K3 kiểm điều kiện ghi lỗi và xác minh đúng hãng–kiện, K2 đọc trần hoàn tự động theo ngày từ cấu hình. Ghi nguồn dữ liệu và điều kiện của từng cổng vào B7.1.
+- Sửa hai nhánh của S6. Khi ticket thiếu mã kiện và có nhiều hãng đủ căn cứ ghi lỗi, chuyển người xác minh trước khi ghi tiền. Khi hãng chạm trần lỗi tự động theo ngày của Ops, hoãn riêng lệnh ghi lỗi và giữ khoản hoàn hợp lệ. Bổ sung quy trình xác minh, đối soát trong `operations.stop_conditions`.
+- Thêm `ambiguous_parcel_rate` và `carrier_fault_review_rate` vào `MONITORS` để theo dõi ca cần xác minh kiện và ca cần xem xét lỗi hãng. Ghi cách tính và kết quả đo ở C8.
+- **Sử dụng AI.** Dùng Codex để đọc tài liệu và code, phân tích trace, soạn các mục trong phiếu, triển khai cổng và chỉ số theo dõi, chạy kiểm tra và soạn mục cá nhân này.
 
 ### Bằng chứng
 
-Mã commit, mã lần chạy (`runs/<mã>`), dòng trong phiếu.
+- Commit `0b4de7a` ghi thước đo ở [Phiếu A, mục A2](templates/form-a-criteria.md#a2). [Phiếu B, mục B2](templates/form-b-evaluation-gates.md#b2) dẫn trace `T-002@55`, dòng 02–03 và 05–10, đối chiếu với baseline chính thức `R-base-before-20261118-155314-bde05c`.
+- Commit `b17051f` ghi code cổng vòng 1 và bảng [B7.1](templates/form-b-evaluation-gates.md#b7). Lần chạy chính thức của Tiến `R-base-after-20261118-164904-13ea92` đạt 110/110. Sang tự chạy lại với mã `R-base-after-20261118-163804-dafe28`, cũng đạt 110/110 và 13 test công khai đều qua.
+- [C7](templates/form-c-incident.md#c7) và [C8](templates/form-c-incident.md#c8) ghi kết quả từng lượt sửa S6. Trên máy Sang, từ `prepared` đến `after`, hoàn sai giảm từ 270.000đ xuống 0đ và lỗi hãng oan từ 20 xuống 0. Run `R-S6-after-20261118-174216-88a606` đạt 60/60 và run nền `R-base-after-20261118-174217-88a606` đạt 110/110. Cả 13 test công khai và 9 kiểm tra bổ sung vòng 2 đều qua. Mỗi monitor mới ghi nhận 10/60 trial trên S6 và 0/110 trial trên bộ nền.
+- Báo cáo `R-S6-grade-20261118-174219-88a606` ghi `PASS-VISIBLE` tại thời điểm chạy, trước khi dọn bảy thư mục thẻ khác. Lần chạy đó chỉ kiểm thử công khai. Nhật ký từng lần đo cục bộ ở `runs/sang-task35-36-runlog.json`.
 
 ### Exit ticket
 
-Một điều học được, một điều còn chưa chắc.
+- **Điều học được.** Em học được rằng cổng phải kiểm theo đúng đơn vị chịu trách nhiệm. Với đơn nhiều kiện, việc chọn nhầm kiện có thể ghi lỗi oan cho một hãng dù khoản hoàn trông hợp lý. Vì vậy, nếu chưa rõ kiện nào, em đặt bước xác minh trước khi ghi tiền.
+- **Điều còn chưa chắc.** Em chưa biết người trực có xử lý kịp các lỗi hãng bị hoãn khi nhiều đơn đến cùng lúc trong pilot thật hay không. Monitor chỉ đếm ca cần xem xét. Em muốn đo thêm thời gian từ lúc ghi sự kiện đến lúc xác minh xong và chi phí đối soát mỗi ca.
 
 ## DaoThiThuPhuong-2A202603457
 

@@ -12,7 +12,12 @@
     "reviewers_on_shift": 1,
     "review_capacity_per_hour": 6,
     "max_queue_wait_minutes": 60,
-    "stop_conditions": ["Chờ duyệt quá 60 phút hoặc có ít nhất một ca ùn thì thu hẹp pilot và chuyển phần còn lại sang CSKH xử lý tay.", "Có tiền hoàn sai thì tắt issue_refund. Có lỗi ghi oan hoặc lộ dữ liệu thì tắt file_carrier_fault hoặc notify_carrier tương ứng."],
+    "stop_conditions": [
+      "Chờ duyệt quá 60 phút hoặc có ít nhất một ca ùn thì thu hẹp pilot và chuyển phần còn lại sang CSKH xử lý tay.",
+      "Có tiền hoàn sai thì tắt issue_refund. Có lỗi ghi oan hoặc lộ dữ liệu thì tắt file_carrier_fault hoặc notify_carrier tương ứng.",
+      "Khi có parcel_ambiguity, dừng tự động trên ticket đó trước khi ghi tiền hoặc lỗi hãng; NV-HANH xác minh mã kiện với khách và tracking, không chọn hãng theo mã đơn.",
+      "Khi có carrier_fault_review_required, chỉ hoãn ghi lỗi tự động cho hãng đã chạm trần Ops, giữ khoản hoàn hợp lệ; NV-TUNG theo dõi trên kênh Trực CSKH/Ops pilot, giao NV-HANH xem xét và NV-OANH đối soát với hãng trước khi lỗi được dùng làm căn cứ phạt hoặc trừ thưởng. Sự kiện guard không tự tạo hàng chờ duyệt lỗi hãng; PIC phải ghi nhận và theo dõi việc xử lý."
+    ],
     "alert_channel": "Trực CSKH/Ops pilot",
     "decision_note": false,
     "review_sampling_pct": 0

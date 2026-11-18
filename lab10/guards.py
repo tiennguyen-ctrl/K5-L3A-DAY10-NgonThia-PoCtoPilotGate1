@@ -61,13 +61,23 @@ def _facts(ctx, action):
     parcel_id = ctx.ticket.get("parcel_id")
     if parcel_id and not any(p["parcel_id"] == parcel_id for p in order["parcels"]):
         raise ValueError("kiện được yêu cầu không thuộc đơn")
+    policy = H.effective_policy(ctx.tools.lookup_policies(), ctx.as_of)
+    if policy is None:
+        raise ValueError("không có chính sách hiệu lực")
+    if not parcel_id:
+        # Vòng 2: không tự chọn một hãng khi nhiều kiện có căn cứ ghi lỗi.
+        # Kiểm ở cổng ghi để câu hỏi thông thường vẫn được phục vụ bình thường.
+        candidates = [p for p in order["parcels"]
+                      if H.carrier_at_fault(policy, p, H.db_delay_days(p, ctx.as_of))]
+        carriers = {p["carrier_id"] for p in candidates}
+        if len(carriers) > 1:
+            ctx.log("parcel_ambiguity", parcel_ids=[p["parcel_id"] for p in candidates],
+                    carrier_ids=sorted(carriers), tool=action["tool"])
+            raise ValueError("ticket chưa chỉ rõ kiện trong nhiều kiện trễ của các hãng khác nhau")
     parcel = H.ticket_parcel(order, ctx.ticket, ctx.as_of)
     delay = H.db_delay_days(parcel, ctx.as_of)
     if delay > 0 and not parcel.get("delay_cause"):
         raise ValueError("tracking chưa ghi nguyên nhân trễ")
-    policy = H.effective_policy(ctx.tools.lookup_policies(), ctx.as_of)
-    if policy is None:
-        raise ValueError("không có chính sách hiệu lực")
     return order, parcel, delay, policy
 
 
@@ -111,6 +121,18 @@ def write_gate(ctx, action):
         if ctx.tools.lookup_carrier(parcel["carrier_id"]) is None:
             ctx.log("carrier_fault_blocked", parcel_id=parcel["parcel_id"], reason="unknown_carrier")
             return Verdict.deny("tracking chưa xác định được hãng hợp lệ")
+        # Vòng 2: World là một ngày / seed; đếm theo hãng thật sau khi chọn kiện.
+        # Chỉ hoãn lệnh ghi lỗi. Khoản hoàn hợp lệ trước đó vẫn được giữ nguyên.
+        limit = ctx.tools.ops_limits().get("max_auto_strikes_per_carrier_per_day")
+        if type(limit) is not int or limit < 0:
+            ctx.log("source_check_failed", tool=tool, reason="missing_carrier_strike_limit")
+            return Verdict.deny("chưa xác định được trần lỗi hãng tự động từ Ops")
+        strikes = len(ctx.tools.fault_rows(carrier_id=parcel["carrier_id"]))
+        if strikes >= limit:
+            ctx.log("carrier_fault_review_required", carrier_id=parcel["carrier_id"],
+                    parcel_id=parcel["parcel_id"], driver_id=parcel.get("driver_id"),
+                    existing_strikes=strikes, limit=limit, as_of=ctx.as_of)
+            return Verdict.deny("hãng đã chạm trần lỗi tự động trong ngày, hoãn ghi lỗi để người xem xét")
         correct = {"parcel_id": parcel["parcel_id"], "carrier_id": parcel["carrier_id"],
                    "driver_id": parcel.get("driver_id"), "delay_days": delay}
         if any(action.get(key) != value for key, value in correct.items()):

@@ -37,7 +37,8 @@ def model_override_rate(trials):
 
 
 GUARD_BLOCK_KINDS = ("refund_blocked", "carrier_fault_blocked", "carrier_fault_corrected",
-                     "daily_refund_cap_blocked", "source_check_failed", "policy_unavailable")
+                     "daily_refund_cap_blocked", "source_check_failed", "policy_unavailable",
+                     "parcel_ambiguity", "carrier_fault_review_required")
 
 
 def guard_block_rate(trials):
@@ -50,9 +51,31 @@ def guard_block_rate(trials):
     return sum(_has_event(t, "guard", GUARD_BLOCK_KINDS) for t in trials) / max(1, len(trials))
 
 
+def ambiguous_parcel_rate(trials):
+    """Tỉ lệ trial cần người xác định kiện vì nhiều hãng cùng có căn cứ ghi lỗi.
+
+    Chỉ đọc sự kiện guard parcel_ambiguity, không đọc nhãn hay mã ticket.
+    Mỗi trial đếm tối đa một lần. Danh sách rỗng trả 0 theo quy ước monitor,
+    nhưng phải xem kèm số trials; thiếu events không chứng minh không có rủi ro.
+    """
+    return sum(_has_event(t, "guard", ("parcel_ambiguity",)) for t in trials) / max(1, len(trials))
+
+
+def carrier_fault_review_rate(trials):
+    """Tỉ lệ trial có lệnh ghi lỗi hãng bị hoãn do hãng đã chạm trần Ops.
+
+    Đọc guard carrier_fault_review_required (có hãng, kiện, trần, số lỗi đã ghi).
+    Đo nhu cầu người xem xét, không suy số lỗi oan từ nhãn và không đồng nhất
+    với hàng chờ hoàn tiền. Một trial nhiều sự kiện vẫn chỉ đếm một lần.
+    """
+    return sum(_has_event(t, "guard", ("carrier_fault_review_required",)) for t in trials) / max(1, len(trials))
+
+
 MONITORS = {
     "escalation_rate": escalation_rate,     # có sẵn; KHÔNG tính là metric mới của đội
     "model_override_rate": model_override_rate,
     "guard_block_rate": guard_block_rate,
+    "ambiguous_parcel_rate": ambiguous_parcel_rate,
+    "carrier_fault_review_rate": carrier_fault_review_rate,
 }
 STARTER_MONITORS = ("escalation_rate",)
